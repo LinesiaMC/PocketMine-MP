@@ -57,6 +57,7 @@ use pocketmine\utils\RegistryTrait;
  * @method static SlownessEffect SLOWNESS()
  * @method static SpeedEffect SPEED()
  * @method static Effect STRENGTH()
+ * @method static Effect VILLAGE_HERO()
  * @method static Effect WATER_BREATHING()
  * @method static Effect WEAKNESS()
  * @method static WitherEffect WITHER()
@@ -91,7 +92,7 @@ final class VanillaEffects{
 		self::register("slowness", new SlownessEffect(KnownTranslationFactory::potion_moveSlowdown(), new Color(0x5a, 0x6c, 0x81), true));
 		self::register("speed", new SpeedEffect(KnownTranslationFactory::potion_moveSpeed(), new Color(0x7c, 0xaf, 0xc6)));
 		self::register("strength", new Effect(KnownTranslationFactory::potion_damageBoost(), new Color(0x93, 0x24, 0x23)));
-		//TODO: village_hero
+		self::register("village_hero", new Effect("Potion Double XP", new Color(0x93, 0x24, 0x23)));
 		self::register("water_breathing", new Effect(KnownTranslationFactory::potion_waterBreathing(), new Color(0x2e, 0x52, 0x99)));
 		self::register("weakness", new Effect(KnownTranslationFactory::potion_weakness(), new Color(0x48, 0x4d, 0x48), true));
 		self::register("wither", new WitherEffect(KnownTranslationFactory::potion_wither(), new Color(0x35, 0x2a, 0x27), true));

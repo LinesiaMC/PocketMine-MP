@@ -61,7 +61,7 @@ final class EffectIdMap{
 		$this->register(EffectIds::CONDUIT_POWER, VanillaEffects::CONDUIT_POWER());
 		//TODO: SLOW_FALLING
 		//TODO: BAD_OMEN
-		//TODO: VILLAGE_HERO
+		$this->register(EffectIds::VILLAGE_HERO, VanillaEffects::VILLAGE_HERO());
 		$this->register(EffectIds::DARKNESS, VanillaEffects::DARKNESS());
 	}
 }

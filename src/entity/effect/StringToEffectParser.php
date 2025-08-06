@@ -64,6 +64,7 @@ final class StringToEffectParser extends StringToTParser{
 		$result->register("water_breathing", fn() => VanillaEffects::WATER_BREATHING());
 		$result->register("weakness", fn() => VanillaEffects::WEAKNESS());
 		$result->register("wither", fn() => VanillaEffects::WITHER());
+		$result->register("village_hero", fn() => VanillaEffects::VILLAGE_HERO());
 
 		return $result;
 	}
