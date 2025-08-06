@@ -84,6 +84,16 @@ final class FortuneDropHelper{
 		return $count;
 	}
 
+	public static function binomialNoItem(int $min, int $rolls = 3, float $chance = 4 / 7): int {
+		$count = $min;
+		for ($i = 0; $i < $rolls; ++$i) {
+			if (mt_rand() / mt_getrandmax() < $chance) {
+				++$count;
+			}
+		}
+		return $count;
+	}
+
 	/**
 	 * Adds the fortune level to the base max and picks a random number between the minimim and adjusted maximum.
 	 * Each amount in the range has an equal chance of being picked.

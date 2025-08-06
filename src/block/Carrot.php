@@ -31,7 +31,7 @@ class Carrot extends Crops{
 
 	public function getDropsForCompatibleTool(Item $item) : array{
 		return [
-			VanillaItems::CARROT()->setCount($this->age >= self::MAX_AGE ? FortuneDropHelper::binomial($item, 1) : 1)
+			VanillaItems::CARROT()->setCount($this->age >= self::MAX_AGE ? FortuneDropHelper::binomialNoItem(1) : 1)
 		];
 	}
 

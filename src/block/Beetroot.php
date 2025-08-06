@@ -33,7 +33,7 @@ class Beetroot extends Crops{
 		if($this->age >= self::MAX_AGE){
 			return [
 				VanillaItems::BEETROOT(),
-				VanillaItems::BEETROOT_SEEDS()->setCount(FortuneDropHelper::binomial($item, 0))
+				VanillaItems::BEETROOT_SEEDS()->setCount(FortuneDropHelper::binomialNoItem(0))
 			];
 		}
 
