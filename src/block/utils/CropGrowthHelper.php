@@ -115,6 +115,6 @@ final class CropGrowthHelper{
 	public static function canGrow(Block $block) : bool{
 		//while it may be tempting to use mt_rand(0, 25) < multiplier, this would make crops grow a bit faster than
 		//vanilla in most cases due to the remainder of 25 / multiplier not being discarded
-		return mt_rand(0, (int) (25 / self::calculateMultiplier($block))) === 0 && self::hasEnoughLight($block);
+		return mt_rand(0, (int) (25 / self::calculateMultiplier($block))) === 0;
 	}
 }
