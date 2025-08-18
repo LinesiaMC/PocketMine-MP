@@ -54,23 +54,14 @@ use pocketmine\network\mcpe\compression\CompressBatchPromise;
 use pocketmine\network\mcpe\compression\CompressBatchTask;
 use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\compression\ZlibCompressor;
-use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\encryption\EncryptionContext;
-use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkSession;
-use pocketmine\network\mcpe\PacketBroadcaster;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
-use pocketmine\network\mcpe\raklib\RakLibInterface;
-use pocketmine\network\mcpe\StandardEntityEventBroadcaster;
-use pocketmine\network\mcpe\StandardPacketBroadcaster;
 use pocketmine\network\Network;
-use pocketmine\network\NetworkInterfaceStartException;
-use pocketmine\network\query\DedicatedQueryNetworkInterface;
 use pocketmine\network\query\QueryHandler;
 use pocketmine\network\query\QueryInfo;
 use pocketmine\network\upnp\UPnPNetworkInterface;
-use pocketmine\permission\BanList;
 use pocketmine\permission\DefaultPermissions;
 use pocketmine\player\DatFilePlayerDataProvider;
 use pocketmine\player\GameMode;
@@ -82,7 +73,6 @@ use pocketmine\player\PlayerDataSaveException;
 use pocketmine\player\PlayerInfo;
 use pocketmine\plugin\PharPluginLoader;
 use pocketmine\plugin\PluginEnableOrder;
-use pocketmine\plugin\PluginGraylist;
 use pocketmine\plugin\PluginManager;
 use pocketmine\plugin\PluginOwned;
 use pocketmine\plugin\ScriptPluginLoader;
@@ -108,7 +98,6 @@ use pocketmine\utils\NotCloneable;
 use pocketmine\utils\NotSerializable;
 use pocketmine\utils\Process;
 use pocketmine\utils\SignalHandler;
-use pocketmine\utils\Terminal;
 use pocketmine\utils\TextFormat;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\WorldProviderManager;
@@ -216,10 +205,6 @@ class Server{
 	private static ?Server $instance = null;
 
 	private TimeTrackingSleeperHandler $tickSleeper;
-
-	private BanList $banByName;
-
-	private BanList $banByIP;
 
 	private Config $operators;
 
@@ -657,14 +642,6 @@ class Server{
 		}
 	}
 
-	public function getNameBans() : BanList{
-		return $this->banByName;
-	}
-
-	public function getIPBans() : BanList{
-		return $this->banByIP;
-	}
-
 	public function addOp(string $name) : void{
 		$this->operators->set(strtolower($name), true);
 
@@ -909,19 +886,6 @@ class Server{
 			$this->operators = new Config(Path::join($this->dataPath, "ops.txt"), Config::ENUM);
 			$this->whitelist = new Config(Path::join($this->dataPath, "white-list.txt"), Config::ENUM);
 
-			$bannedTxt = Path::join($this->dataPath, "banned.txt");
-			$bannedPlayersTxt = Path::join($this->dataPath, "banned-players.txt");
-			if(file_exists($bannedTxt) && !file_exists($bannedPlayersTxt)){
-				@rename($bannedTxt, $bannedPlayersTxt);
-			}
-			@touch($bannedPlayersTxt);
-			$this->banByName = new BanList($bannedPlayersTxt);
-			$this->banByName->load();
-			$bannedIpsTxt = Path::join($this->dataPath, "banned-ips.txt");
-			@touch($bannedIpsTxt);
-			$this->banByIP = new BanList($bannedIpsTxt);
-			$this->banByIP->load();
-
 			$this->maxPlayers = $this->configGroup->getConfigInt(ServerProperties::MAX_PLAYERS, self::DEFAULT_MAX_PLAYERS);
 
 			$this->onlineMode = $this->configGroup->getConfigBool(ServerProperties::XBOX_AUTH, true);
@@ -1095,15 +1059,8 @@ class Server{
 	private function startupPrepareNetworkInterfaces() : bool{
 		$useQuery = $this->configGroup->getConfigBool(ServerProperties::ENABLE_QUERY, true);
 
-		$typeConverter = TypeConverter::getInstance();
-		$packetBroadcaster = new StandardPacketBroadcaster($this);
-
 		if($useQuery){
 			$this->network->registerRawPacketHandler(new QueryHandler($this));
-		}
-
-		foreach($this->getIPBans()->getEntries() as $entry){
-			$this->network->blockAddress($entry->getName(), -1);
 		}
 
 		if($this->configGroup->getPropertyBool(Yml::NETWORK_UPNP_FORWARDING, false)){

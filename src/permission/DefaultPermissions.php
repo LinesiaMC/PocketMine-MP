@@ -54,9 +54,6 @@ abstract class DefaultPermissions{
 
 		self::registerPermission(new Permission(Names::BROADCAST_ADMIN, l10n::pocketmine_permission_broadcast_admin()), [$operatorRoot]);
 		self::registerPermission(new Permission(Names::BROADCAST_USER, l10n::pocketmine_permission_broadcast_user()), [$everyoneRoot]);
-		self::registerPermission(new Permission(Names::COMMAND_BAN_IP, l10n::pocketmine_permission_command_ban_ip()), [$operatorRoot]);
-		self::registerPermission(new Permission(Names::COMMAND_BAN_LIST, l10n::pocketmine_permission_command_ban_list()), [$operatorRoot]);
-		self::registerPermission(new Permission(Names::COMMAND_BAN_PLAYER, l10n::pocketmine_permission_command_ban_player()), [$operatorRoot]);
 		self::registerPermission(new Permission(Names::COMMAND_CLEAR_OTHER, l10n::pocketmine_permission_command_clear_other()), [$operatorRoot]);
 		self::registerPermission(new Permission(Names::COMMAND_CLEAR_SELF, l10n::pocketmine_permission_command_clear_self()), [$everyoneRoot]);
 		self::registerPermission(new Permission(Names::COMMAND_DEFAULTGAMEMODE, l10n::pocketmine_permission_command_defaultgamemode()), [$operatorRoot]);
@@ -103,8 +100,6 @@ abstract class DefaultPermissions{
 		self::registerPermission(new Permission(Names::COMMAND_TITLE_OTHER, l10n::pocketmine_permission_command_title_other()), [$operatorRoot]);
 		self::registerPermission(new Permission(Names::COMMAND_TITLE_SELF, l10n::pocketmine_permission_command_title_self()), [$operatorRoot]);
 		self::registerPermission(new Permission(Names::COMMAND_TRANSFERSERVER, l10n::pocketmine_permission_command_transferserver()), [$operatorRoot]);
-		self::registerPermission(new Permission(Names::COMMAND_UNBAN_IP, l10n::pocketmine_permission_command_unban_ip()), [$operatorRoot]);
-		self::registerPermission(new Permission(Names::COMMAND_UNBAN_PLAYER, l10n::pocketmine_permission_command_unban_player()), [$operatorRoot]);
 		self::registerPermission(new Permission(Names::COMMAND_VERSION, l10n::pocketmine_permission_command_version()), [$everyoneRoot]);
 		self::registerPermission(new Permission(Names::COMMAND_WHITELIST_ADD, l10n::pocketmine_permission_command_whitelist_add()), [$operatorRoot]);
 		self::registerPermission(new Permission(Names::COMMAND_WHITELIST_DISABLE, l10n::pocketmine_permission_command_whitelist_disable()), [$operatorRoot]);

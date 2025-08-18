@@ -129,18 +129,6 @@ class LoginPacketHandler extends PacketHandler{
 			$ev->setKickFlag(PlayerPreLoginEvent::KICK_FLAG_SERVER_WHITELISTED, KnownTranslationFactory::pocketmine_disconnect_whitelisted());
 		}
 
-		$banMessage = null;
-		if(($banEntry = $this->server->getNameBans()->getEntry($playerInfo->getUsername())) !== null){
-			$banReason = $banEntry->getReason();
-			$banMessage = $banReason === "" ? KnownTranslationFactory::pocketmine_disconnect_ban_noReason() : KnownTranslationFactory::pocketmine_disconnect_ban($banReason);
-		}elseif(($banEntry = $this->server->getIPBans()->getEntry($this->session->getIp())) !== null){
-			$banReason = $banEntry->getReason();
-			$banMessage = KnownTranslationFactory::pocketmine_disconnect_ban($banReason !== "" ? $banReason : KnownTranslationFactory::pocketmine_disconnect_ban_ip());
-		}
-		if($banMessage !== null){
-			$ev->setKickFlag(PlayerPreLoginEvent::KICK_FLAG_BANNED, $banMessage);
-		}
-
 		$ev->call();
 		if(!$ev->isAllowed()){
 			$this->session->disconnect($ev->getFinalDisconnectReason(), $ev->getFinalDisconnectScreenMessage());

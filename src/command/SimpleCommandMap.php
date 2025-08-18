@@ -23,9 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\command;
 
-use pocketmine\command\defaults\BanCommand;
-use pocketmine\command\defaults\BanIpCommand;
-use pocketmine\command\defaults\BanListCommand;
 use pocketmine\command\defaults\ClearCommand;
 use pocketmine\command\defaults\DefaultGamemodeCommand;
 use pocketmine\command\defaults\DeopCommand;
@@ -95,9 +92,6 @@ class SimpleCommandMap implements CommandMap{
 
 	private function setDefaultCommands() : void{
 		$this->registerAll("pocketmine", [
-			new BanCommand(),
-			new BanIpCommand(),
-			new BanListCommand(),
 			new ClearCommand(),
 			new DefaultGamemodeCommand(),
 			new DeopCommand(),
@@ -114,8 +108,6 @@ class SimpleCommandMap implements CommandMap{
 			new ListCommand(),
 			new MeCommand(),
 			new OpCommand(),
-			new PardonCommand(),
-			new PardonIpCommand(),
 			new ParticleCommand(),
 			new PluginsCommand(),
 			new SaveCommand(),
