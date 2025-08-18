@@ -93,14 +93,6 @@ abstract class AsyncTask extends Runnable{
 
 		$this->finished = true;
 		AsyncWorker::getNotifier()->wakeupSleeper();
-		AsyncWorker::maybeCollectCycles();
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public function isCrashed() : bool{
-		return $this->isTerminated();
 	}
 
 	/**
@@ -108,7 +100,7 @@ abstract class AsyncTask extends Runnable{
 	 * because it is not true prior to task execution.
 	 */
 	public function isFinished() : bool{
-		return $this->finished || $this->isTerminated();
+		return $this->finished;
 	}
 
 	public function hasResult() : bool{
@@ -127,20 +119,6 @@ abstract class AsyncTask extends Runnable{
 
 	public function setResult(mixed $result) : void{
 		$this->result = is_scalar($result) || is_null($result) || $result instanceof ThreadSafe ? $result : new NonThreadSafeValue($result);
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public function cancelRun() : void{
-		//NOOP
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public function hasCancelledRun() : bool{
-		return false;
 	}
 
 	public function setSubmitted() : void{

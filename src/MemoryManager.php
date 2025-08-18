@@ -45,8 +45,6 @@ class MemoryManager{
 	private const DEFAULT_CONTINUOUS_TRIGGER_RATE = Server::TARGET_TICKS_PER_SECOND * 2;
 	private const DEFAULT_TICKS_PER_GC = 30 * 60 * Server::TARGET_TICKS_PER_SECOND;
 
-	private GarbageCollectorManager $cycleGcManager;
-
 	private int $memoryLimit;
 	private int $globalMemoryLimit;
 	private int $checkRate;
@@ -58,9 +56,6 @@ class MemoryManager{
 	private int $continuousTriggerCount = 0;
 	private int $continuousTriggerTicker = 0;
 
-	private int $garbageCollectionPeriod;
-	private int $garbageCollectionTicker = 0;
-
 	private int $lowMemChunkRadiusOverride;
 
 	private bool $dumpWorkers = true;
@@ -71,7 +66,6 @@ class MemoryManager{
 		private Server $server
 	){
 		$this->logger = new \PrefixedLogger($server->getLogger(), "Memory Manager");
-		$this->cycleGcManager = new GarbageCollectorManager($this->logger, Timings::$memoryManager);
 
 		$this->init($server->getConfigGroup());
 	}
@@ -107,8 +101,6 @@ class MemoryManager{
 		$this->checkRate = $config->getPropertyInt(Yml::MEMORY_CHECK_RATE, self::DEFAULT_CHECK_RATE);
 		$this->continuousTrigger = $config->getPropertyBool(Yml::MEMORY_CONTINUOUS_TRIGGER, true);
 		$this->continuousTriggerRate = $config->getPropertyInt(Yml::MEMORY_CONTINUOUS_TRIGGER_RATE, self::DEFAULT_CONTINUOUS_TRIGGER_RATE);
-
-		$this->garbageCollectionPeriod = $config->getPropertyInt(Yml::MEMORY_GARBAGE_COLLECTION_PERIOD, self::DEFAULT_TICKS_PER_GC);
 
 		$this->lowMemChunkRadiusOverride = $config->getPropertyInt(Yml::MEMORY_MAX_CHUNKS_CHUNK_RADIUS, 4);
 
@@ -190,13 +182,6 @@ class MemoryManager{
 			}else{
 				$this->lowMemory = false;
 			}
-		}
-
-		if($this->garbageCollectionPeriod > 0 && ++$this->garbageCollectionTicker >= $this->garbageCollectionPeriod){
-			$this->garbageCollectionTicker = 0;
-			$this->triggerGarbageCollector();
-		}else{
-			$this->cycleGcManager->maybeCollectCycles();
 		}
 
 		Timings::$memoryManager->stopTiming();

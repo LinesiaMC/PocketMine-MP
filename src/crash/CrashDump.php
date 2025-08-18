@@ -160,17 +160,6 @@ class CrashDump{
 	}
 
 	private function extraData() : void{
-		global $argv;
-
-		if($this->server->getConfigGroup()->getPropertyBool(YmlServerProperties::AUTO_REPORT_SEND_SETTINGS, true)){
-			$this->data->parameters = (array) $argv;
-			if(($serverDotProperties = @file_get_contents(Path::join($this->server->getDataPath(), "server.properties"))) !== false){
-				$this->data->serverDotProperties = preg_replace("#^rcon\\.password=(.*)$#m", "rcon.password=******", $serverDotProperties) ?? throw new AssumptionFailedError("Pattern is valid");
-			}
-			if(($pocketmineDotYml = @file_get_contents(Path::join($this->server->getDataPath(), "pocketmine.yml"))) !== false){
-				$this->data->pocketmineDotYml = $pocketmineDotYml;
-			}
-		}
 		$extensions = [];
 		foreach(get_loaded_extensions() as $ext){
 			$version = phpversion($ext);
@@ -179,13 +168,6 @@ class CrashDump{
 		$this->data->extensions = $extensions;
 
 		$this->data->jit_mode = Utils::getOpcacheJitMode();
-
-		if($this->server->getConfigGroup()->getPropertyBool(YmlServerProperties::AUTO_REPORT_SEND_PHPINFO, true)){
-			ob_start();
-			phpinfo();
-			$this->data->phpinfo = ob_get_contents(); // @phpstan-ignore-line
-			ob_end_clean();
-		}
 	}
 
 	private function baseCrash() : void{
@@ -232,15 +214,6 @@ class CrashDump{
 				}
 				if($this->determinePluginFromFile($frameFile, false)){
 					break;
-				}
-			}
-		}
-
-		if($this->server->getConfigGroup()->getPropertyBool(YmlServerProperties::AUTO_REPORT_SEND_CODE, true) && file_exists($error["fullFile"])){
-			$file = @file($error["fullFile"], FILE_IGNORE_NEW_LINES);
-			if($file !== false){
-				for($l = max(0, $error["line"] - 10); $l < $error["line"] + 10 && isset($file[$l]); ++$l){
-					$this->data->code[$l + 1] = $file[$l];
 				}
 			}
 		}

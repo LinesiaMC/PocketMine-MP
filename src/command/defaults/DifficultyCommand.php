@@ -50,10 +50,6 @@ class DifficultyCommand extends VanillaCommand{
 
 		$difficulty = World::getDifficultyFromString($args[0]);
 
-		if($sender->getServer()->isHardcore()){
-			$difficulty = World::DIFFICULTY_HARD;
-		}
-
 		if($difficulty !== -1){
 			$sender->getServer()->getConfigGroup()->setConfigInt(ServerProperties::DIFFICULTY, $difficulty);
 

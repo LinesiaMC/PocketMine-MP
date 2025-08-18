@@ -151,7 +151,7 @@ class TimingsCommand extends VanillaCommand{
 			"data" => implode("\n", $lines)
 		];
 
-		$host = $sender->getServer()->getConfigGroup()->getPropertyString(YmlServerProperties::TIMINGS_HOST, "timings.pmmp.io");
+		$host = "timings.pmmp.io";
 
 		$sender->getServer()->getAsyncPool()->submitTask(new BulkCurlTask(
 			[new BulkCurlTaskOperation(

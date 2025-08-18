@@ -389,7 +389,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		$this->firstPlayed = $nbt->getLong(self::TAG_FIRST_PLAYED, $now = (int) (microtime(true) * 1000));
 		$this->lastPlayed = $nbt->getLong(self::TAG_LAST_PLAYED, $now);
 
-		if(!$this->server->getForceGamemode() && ($gameModeTag = $nbt->getTag(self::TAG_GAME_MODE)) instanceof IntTag){
+		if(($gameModeTag = $nbt->getTag(self::TAG_GAME_MODE)) instanceof IntTag){
 			$this->internalSetGameMode(GameModeIdMap::getInstance()->fromId($gameModeTag->getValue()) ?? GameMode::SURVIVAL); //TODO: bad hack here to avoid crashes on corrupted data
 		}else{
 			$this->internalSetGameMode($this->server->getGamemode());
@@ -2518,13 +2518,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function respawn() : void{
-		if($this->server->isHardcore()){
-			if($this->kick(KnownTranslationFactory::pocketmine_disconnect_ban(KnownTranslationFactory::pocketmine_disconnect_ban_hardcore()))){ //this allows plugins to prevent the ban by cancelling PlayerKickEvent
-				$this->server->getNameBans()->addBan($this->getName(), "Died in hardcore mode");
-			}
-			return;
-		}
-
 		$this->actuallyRespawn();
 	}
 

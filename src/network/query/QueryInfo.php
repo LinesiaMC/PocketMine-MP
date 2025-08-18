@@ -40,9 +40,6 @@ final class QueryInfo{
 	public const GAME_ID = "MINECRAFTPE";
 
 	private string $serverName;
-	private bool $listPlugins;
-	/** @var Plugin[] */
-	private array $plugins;
 	/** @var string[] */
 	private array $players;
 
@@ -67,8 +64,6 @@ final class QueryInfo{
 
 	public function __construct(Server $server){
 		$this->serverName = $server->getMotd();
-		$this->listPlugins = $server->getConfigGroup()->getPropertyBool(YmlServerProperties::SETTINGS_QUERY_PLUGINS, true);
-		$this->plugins = $server->getPluginManager()->getPlugins();
 		$this->players = array_map(fn(Player $p) => $p->getName(), $server->getOnlinePlayers());
 
 		$this->gametype = ($server->getGamemode() === GameMode::SURVIVAL || $server->getGamemode() === GameMode::ADVENTURE) ? "SMP" : "CMP";
@@ -95,31 +90,6 @@ final class QueryInfo{
 
 	public function setServerName(string $serverName) : void{
 		$this->serverName = $serverName;
-		$this->destroyCache();
-	}
-
-	public function canListPlugins() : bool{
-		return $this->listPlugins;
-	}
-
-	public function setListPlugins(bool $value) : void{
-		$this->listPlugins = $value;
-		$this->destroyCache();
-	}
-
-	/**
-	 * @return Plugin[]
-	 */
-	public function getPlugins() : array{
-		return $this->plugins;
-	}
-
-	/**
-	 * @param Plugin[] $plugins
-	 */
-	public function setPlugins(array $plugins) : void{
-		Utils::validateArrayValueType($plugins, function(Plugin $_) : void{});
-		$this->plugins = $plugins;
 		$this->destroyCache();
 	}
 
@@ -192,16 +162,6 @@ final class QueryInfo{
 		}
 		$query = "";
 
-		$plist = $this->server_engine;
-		if(count($this->plugins) > 0 && $this->listPlugins){
-			$plist .= ":";
-			foreach($this->plugins as $p){
-				$d = $p->getDescription();
-				$plist .= " " . str_replace([";", ":", " "], ["", "", "_"], $d->getName()) . " " . str_replace([";", ":", " "], ["", "", "_"], $d->getVersion()) . ";";
-			}
-			$plist = substr($plist, 0, -1);
-		}
-
 		$KVdata = [
 			"splitnum" => chr(128),
 			"hostname" => $this->serverName,
@@ -209,7 +169,6 @@ final class QueryInfo{
 			"game_id" => self::GAME_ID,
 			"version" => $this->version,
 			"server_engine" => $this->server_engine,
-			"plugins" => $plist,
 			"map" => $this->map,
 			"numplayers" => $this->numPlayers,
 			"maxplayers" => $this->maxPlayers,
