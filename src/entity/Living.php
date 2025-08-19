@@ -469,11 +469,15 @@ abstract class Living extends Entity{
 			// Example: 10 points → ~66.6% reduction, 5 points → 50% reduction.
 			// This modifier is applied before other damage reductions such as enchantments or effects.
 
-			$armorPoints = $this->getArmorPoints();
+			/*$armorPoints = $this->getArmorPoints();
 			$source->setModifier(
 				-$source->getFinalDamage() * min($armorPoints / ($armorPoints + 5), 0.80),
 				EntityDamageEvent::MODIFIER_ARMOR
-			);
+			);*/
+
+
+			//MCPE uses the same system as PC did pre-1.9
+			$source->setModifier(-$source->getFinalDamage() * $this->getArmorPoints() * 0.04, EntityDamageEvent::MODIFIER_ARMOR);
 		}
 
 		$cause = $source->getCause();
