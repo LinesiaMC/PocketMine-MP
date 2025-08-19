@@ -8,7 +8,7 @@ debug: false #It will show debug messages in the console
 settings:
   #Whether to send all strings translated to server locale or let the device handle them
   force-language: false
-  shutdown-message: "Server closed"
+  shutdown-message: "§d- §fRedémarrage du serveur §d-"
   #Will only add results when tick measurement is below or equal to given value (default 20)
   profile-report-trigger: 20
   #Number of AsyncTask workers.
@@ -18,7 +18,7 @@ settings:
   async-workers: auto
   #Whether to allow running development builds. Dev builds might crash, break your plugins, corrupt your world and more.
   #It is recommended to avoid using development builds where possible.
-  enable-dev-builds: false
+  enable-dev-builds: true
 
 memory:
   #Global soft memory limit in megabytes. Set to 0 to disable
@@ -31,12 +31,12 @@ memory:
 
   #Main thread hard memory limit in megabytes. Set to 0 to disable
   #This will stop the server when the limit is surpassed
-  main-hard-limit: 1024
+  main-hard-limit: 0
 
   #AsyncWorker threads' hard memory limit in megabytes. Set to 0 to disable
   #This will crash the task currently executing on the worker if the task exceeds the limit
   #NOTE: THIS LIMIT APPLIES PER WORKER, NOT TO THE WHOLE PROCESS.
-  async-worker-hard-limit: 256
+  async-worker-hard-limit: 0
 
   #Period in ticks to check memory (default 1 second)
   check-rate: 20
@@ -98,9 +98,9 @@ chunk-ticking:
   blocks-per-subchunk-per-tick: 2
   #IDs of blocks not to perform random ticking on.
   disable-block-ticking:
-    #- grass
-    #- ice
-    #- fire
+    - grass
+    - ice
+    - fire
 
 chunk-generation:
   #Max. amount of chunks in the waiting queue to be populated
