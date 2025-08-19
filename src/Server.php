@@ -182,10 +182,10 @@ class Server{
 	public const BROADCAST_CHANNEL_USERS = "pocketmine.broadcast.user";
 
 	public const DEFAULT_SERVER_NAME = VersionInfo::NAME . " Server";
-	public const DEFAULT_MAX_PLAYERS = 20;
+	public const DEFAULT_MAX_PLAYERS = 200;
 	public const DEFAULT_PORT_IPV4 = 19132;
 	public const DEFAULT_PORT_IPV6 = 19133;
-	public const DEFAULT_MAX_VIEW_DISTANCE = 16;
+	public const DEFAULT_MAX_VIEW_DISTANCE = 100;
 
 	/**
 	 * Worlds, network, commands and most other things are polled this many times per second on average.
@@ -773,7 +773,7 @@ class Server{
 					ServerProperties::GAME_MODE => GameMode::SURVIVAL->name, //TODO: this probably shouldn't use the enum name directly
 					ServerProperties::PVP => true,
 					ServerProperties::DIFFICULTY => World::DIFFICULTY_PEACEFUL,
-					ServerProperties::DEFAULT_WORLD_NAME => "world",
+					ServerProperties::DEFAULT_WORLD_NAME => "linesia",
 					ServerProperties::ENABLE_QUERY => true,
 					ServerProperties::VIEW_DISTANCE => self::DEFAULT_MAX_VIEW_DISTANCE,
 					ServerProperties::XBOX_AUTH => true,
