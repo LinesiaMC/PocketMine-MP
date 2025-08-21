@@ -28,6 +28,7 @@ namespace pocketmine\network;
 
 use pocketmine\event\server\NetworkInterfaceRegisterEvent;
 use pocketmine\event\server\NetworkInterfaceUnregisterEvent;
+use pocketmine\network\mcpe\PacketRateLimiter;
 use pocketmine\utils\Utils;
 use function base64_encode;
 use function get_class;
