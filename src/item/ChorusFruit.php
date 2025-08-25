@@ -44,7 +44,7 @@ class ChorusFruit extends Food{
 		return false;
 	}
 
-	public function onConsume(Living $consumer) : void{
+	/*public function onConsume(Living $consumer) : void{
 		$world = $consumer->getWorld();
 
 		$origin = $consumer->getPosition();
@@ -81,6 +81,54 @@ class ChorusFruit extends Food{
 			$consumer->teleport($target = new Vector3($x + 0.5, $y + 1, $z + 0.5));
 			$world->addSound($target, new EndermanTeleportSound());
 
+			break;
+		}
+	}*/
+
+	public function onConsume(Living $consumer) : void{
+		$world = $consumer->getWorld();
+
+		$origin = $consumer->getPosition();
+
+		// horizontal : 0–17
+		$minX = $origin->getFloorX() - 17;
+		$minY = min($origin->getFloorY(), $consumer->getWorld()->getMaxY()) - 22; // ← était -8
+		$minZ = $origin->getFloorZ() - 17;
+
+		$maxX = $minX + 34;
+		$maxY = $minY + 44; // ← était +16 (soit ±22)
+		$maxZ = $minZ + 34;
+
+		$worldMinY = $world->getMinY();
+
+		for($attempts = 0; $attempts < 16; ++$attempts){
+			$x = mt_rand($minX, $maxX);
+			$y = mt_rand($minY, $maxY);
+			$z = mt_rand($minZ, $maxZ);
+
+			// borne la distance horizontale à [0 ; 17]
+			$dx = ($x + 0.5) - $origin->getX();
+			$dz = ($z + 0.5) - $origin->getZ();
+			if(($dx*$dx + $dz*$dz) > 17*17){
+				continue;
+			}
+
+			while($y >= $worldMinY && !$world->getBlockAt($x, $y, $z)->isSolid()){
+				$y--;
+			}
+			if($y < $worldMinY){
+				continue;
+			}
+
+			$blockUp = $world->getBlockAt($x, $y + 1, $z);
+			$blockUp2 = $world->getBlockAt($x, $y + 2, $z);
+			if($blockUp->isSolid() || $blockUp instanceof Liquid || $blockUp2->isSolid() || $blockUp2 instanceof Liquid){
+				continue;
+			}
+
+			$world->addSound($origin, new EndermanTeleportSound());
+			$consumer->teleport($target = new Vector3($x + 0.5, $y + 1, $z + 0.5));
+			$world->addSound($target, new EndermanTeleportSound());
 			break;
 		}
 	}
