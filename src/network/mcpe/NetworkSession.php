@@ -1106,7 +1106,7 @@ class NetworkSession{
 			AbilitiesLayer::ABILITY_BUILD => !$for->isSpectator(),
 			AbilitiesLayer::ABILITY_MINE => !$for->isSpectator(),
 			AbilitiesLayer::ABILITY_DOORS_AND_SWITCHES => !$for->isSpectator(),
-			AbilitiesLayer::ABILITY_OPEN_CONTAINERS => !$for->isSpectator(),
+			AbilitiesLayer::ABILITY_OPEN_CONTAINERS => $for->isSurvival(true) || $for->isCreative(true),
 			AbilitiesLayer::ABILITY_ATTACK_PLAYERS => !$for->isSpectator(),
 			AbilitiesLayer::ABILITY_ATTACK_MOBS => !$for->isSpectator(),
 			AbilitiesLayer::ABILITY_PRIVILEGED_BUILDER => false,
