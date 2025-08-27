@@ -75,37 +75,37 @@ class StatusCommand extends VanillaCommand{
 					: "") . "$minutes minutes "
 			: "") . "$seconds seconds";
 
-		$sender->sendMessage(TextFormat::GOLD . "Uptime: " . TextFormat::RED . $uptime);
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Uptime: " . TextFormat::RED . $uptime);
 
 		$tpsColor = TextFormat::GREEN;
 		if($server->getTicksPerSecond() < 12){
 			$tpsColor = TextFormat::RED;
 		}elseif($server->getTicksPerSecond() < 17){
-			$tpsColor = TextFormat::GOLD;
+			$tpsColor = TextFormat::LIGHT_PURPLE;
 		}
 
-		$sender->sendMessage(TextFormat::GOLD . "Current TPS: {$tpsColor}{$server->getTicksPerSecond()} ({$server->getTickUsage()}%)");
-		$sender->sendMessage(TextFormat::GOLD . "Average TPS: {$tpsColor}{$server->getTicksPerSecondAverage()} ({$server->getTickUsageAverage()}%)");
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Current TPS: {$tpsColor}{$server->getTicksPerSecond()} ({$server->getTickUsage()}%)");
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Average TPS: {$tpsColor}{$server->getTicksPerSecondAverage()} ({$server->getTickUsageAverage()}%)");
 
 		$bandwidth = $server->getNetwork()->getBandwidthTracker();
-		$sender->sendMessage(TextFormat::GOLD . "Network upload: " . TextFormat::RED . round($bandwidth->getSend()->getAverageBytes() / 1024, 2) . " kB/s");
-		$sender->sendMessage(TextFormat::GOLD . "Network download: " . TextFormat::RED . round($bandwidth->getReceive()->getAverageBytes() / 1024, 2) . " kB/s");
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Network upload: " . TextFormat::RED . round($bandwidth->getSend()->getAverageBytes() / 1024, 2) . " kB/s");
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Network download: " . TextFormat::RED . round($bandwidth->getReceive()->getAverageBytes() / 1024, 2) . " kB/s");
 
-		$sender->sendMessage(TextFormat::GOLD . "Thread count: " . TextFormat::RED . Process::getThreadCount());
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Thread count: " . TextFormat::RED . Process::getThreadCount());
 
-		$sender->sendMessage(TextFormat::GOLD . "Main thread memory: " . TextFormat::RED . number_format(round(($mUsage[0] / 1024) / 1024, 2), 2) . " MB.");
-		$sender->sendMessage(TextFormat::GOLD . "Total memory: " . TextFormat::RED . number_format(round(($mUsage[1] / 1024) / 1024, 2), 2) . " MB.");
-		$sender->sendMessage(TextFormat::GOLD . "Total virtual memory: " . TextFormat::RED . number_format(round(($mUsage[2] / 1024) / 1024, 2), 2) . " MB.");
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Main thread memory: " . TextFormat::RED . number_format(round(($mUsage[0] / 1024) / 1024, 2), 2) . " MB.");
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Total memory: " . TextFormat::RED . number_format(round(($mUsage[1] / 1024) / 1024, 2), 2) . " MB.");
+		$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Total virtual memory: " . TextFormat::RED . number_format(round(($mUsage[2] / 1024) / 1024, 2), 2) . " MB.");
 
 		$globalLimit = $server->getMemoryManager()->getGlobalMemoryLimit();
 		if($globalLimit > 0){
-			$sender->sendMessage(TextFormat::GOLD . "Maximum memory (manager): " . TextFormat::RED . number_format(round(($globalLimit / 1024) / 1024, 2), 2) . " MB.");
+			$sender->sendMessage(TextFormat::LIGHT_PURPLE . "Maximum memory (manager): " . TextFormat::RED . number_format(round(($globalLimit / 1024) / 1024, 2), 2) . " MB.");
 		}
 
 		foreach($server->getWorldManager()->getWorlds() as $world){
 			$worldName = $world->getFolderName() !== $world->getDisplayName() ? " (" . $world->getDisplayName() . ")" : "";
 			$timeColor = $world->getTickRateTime() > 40 ? TextFormat::RED : TextFormat::YELLOW;
-			$sender->sendMessage(TextFormat::GOLD . "World \"{$world->getFolderName()}\"$worldName: " .
+			$sender->sendMessage(TextFormat::LIGHT_PURPLE . "World \"{$world->getFolderName()}\"$worldName: " .
 				TextFormat::RED . number_format(count($world->getLoadedChunks())) . TextFormat::GREEN . " loaded chunks, " .
 				TextFormat::RED . number_format(count($world->getTickingChunks())) . TextFormat::GREEN . " ticking chunks, " .
 				TextFormat::RED . number_format(count($world->getEntities())) . TextFormat::GREEN . " entities. " .

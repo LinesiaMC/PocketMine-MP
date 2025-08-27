@@ -884,13 +884,13 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			$this->usedChunks[$index] = UsedChunkStatus::REQUESTED_GENERATION;
 			$this->activeChunkGenerationRequests[$index] = true;
 			unset($this->loadQueue[$index]);
-			$world->registerChunkLoader($this->chunkLoader, $X, $Z, true);
-			$world->registerChunkListener($this, $X, $Z);
+			$world->registerChunkLoader($this->chunkLoader, (int)$X, (int)$Z, true);
+			$world->registerChunkListener($this, (int)$X, (int)$Z);
 			if(isset($this->tickingChunks[$index])){
-				$world->registerTickingChunk($this->chunkTicker, $X, $Z);
+				$world->registerTickingChunk($this->chunkTicker, (int)$X, (int)$Z);
 			}
 
-			$world->requestChunkPopulation($X, $Z, $this->chunkLoader)->onCompletion(
+			$world->requestChunkPopulation((int)$X, (int)$Z, $this->chunkLoader)->onCompletion(
 				function() use ($X, $Z, $index, $world) : void{
 					if(!$this->isConnected() || !isset($this->usedChunks[$index]) || $world !== $this->getWorld()){
 						return;
@@ -904,10 +904,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 					unset($this->activeChunkGenerationRequests[$index]);
 					$this->usedChunks[$index] = UsedChunkStatus::REQUESTED_SENDING;
 
-					$this->getNetworkSession()->startUsingChunk($X, $Z, function() use ($X, $Z, $index) : void{
+					$this->getNetworkSession()->startUsingChunk((int)$X, (int)$Z, function() use ($X, $Z, $index) : void{
 						$this->usedChunks[$index] = UsedChunkStatus::SENT;
 						if($this->spawnChunkLoadCount === -1){
-							$this->spawnEntitiesOnChunk($X, $Z);
+							$this->spawnEntitiesOnChunk((int)$X, (int)$Z);
 						}elseif($this->spawnChunkLoadCount++ === $this->spawnThreshold){
 							$this->spawnChunkLoadCount = -1;
 
@@ -915,7 +915,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 							$this->getNetworkSession()->notifyTerrainReady();
 						}
-						(new PlayerPostChunkSendEvent($this, $X, $Z))->call();
+						(new PlayerPostChunkSendEvent($this, (int)$X, (int)$Z))->call();
 					});
 				},
 				static function() : void{
@@ -1325,7 +1325,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			//the old and new positions (running down stairs necessitates this)
 			$bb = $bb->addCoord(-$dx, -$dy, -$dz);
 
+			// Allows you to see the significant difference between collisions enabled or disabled.
+			Timings::$entityMoveCollision->startTiming();
 			$this->onGround = $this->isCollided = count($this->getWorld()->getCollisionBlocks($bb, true)) > 0;
+			Timings::$entityMoveCollision->stopTiming();
 		}
 	}
 
@@ -1461,7 +1464,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	protected function move(float $dx, float $dy, float $dz) : void{
-		$collisions = $this->configGroup->getPropertyBool("performance.collisions", true);
+		$collisions = $this->configGroup->getPropertyBool(YmlServerProperties::PERFORMANCE_COLISSIONS, true);
 		if($collisions) {
 			parent::move($dx, $dy, $dz);
 			return; // Use the default entity collision handling
@@ -1502,10 +1505,17 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 		$this->getWorld()->onEntityMoved($this);
 
-		$blockIntersections = $this->configGroup->getPropertyBool("performance.block-intersections", true);
+		$blockIntersections = $this->configGroup->getPropertyBool(YmlServerProperties::PERFORMANCE_BLOCK_INTERSECTIONS, true);
 		if($blockIntersections) {
 			$this->checkBlockIntersections();
 		}
+
+		$postFallVerticalVelocity = $this->updateFallState($dy, $this->onGround);
+		$this->motion = $this->motion->withComponents(
+			null,
+			$postFallVerticalVelocity ?? null,
+			null
+		);
 	}
 
 	public function jump() : void{
@@ -1572,7 +1582,8 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 				$this->fireTicks = 1;
 			}
 
-			if(!$this->isSpectator() && $this->isAlive()){
+			$entityCollisions = $this->configGroup->getPropertyBool(YmlServerProperties::PERFORMANCE_ENTITY_COLLISIONS, true);
+			if(!$this->isSpectator() && $this->isAlive() && $entityCollisions){
 				Timings::$playerCheckNearEntities->startTiming();
 				$this->checkNearEntities();
 				Timings::$playerCheckNearEntities->stopTiming();

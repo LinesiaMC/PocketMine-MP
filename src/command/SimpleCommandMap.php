@@ -24,36 +24,24 @@ declare(strict_types=1);
 namespace pocketmine\command;
 
 use pocketmine\command\defaults\ClearCommand;
-use pocketmine\command\defaults\DefaultGamemodeCommand;
 use pocketmine\command\defaults\DeopCommand;
-use pocketmine\command\defaults\DifficultyCommand;
 use pocketmine\command\defaults\DumpMemoryCommand;
 use pocketmine\command\defaults\EffectCommand;
 use pocketmine\command\defaults\EnchantCommand;
 use pocketmine\command\defaults\GamemodeCommand;
 use pocketmine\command\defaults\GarbageCollectorCommand;
 use pocketmine\command\defaults\GiveCommand;
-use pocketmine\command\defaults\HelpCommand;
-use pocketmine\command\defaults\KickCommand;
 use pocketmine\command\defaults\KillCommand;
 use pocketmine\command\defaults\ListCommand;
-use pocketmine\command\defaults\MeCommand;
 use pocketmine\command\defaults\OpCommand;
-use pocketmine\command\defaults\PardonCommand;
-use pocketmine\command\defaults\PardonIpCommand;
 use pocketmine\command\defaults\ParticleCommand;
 use pocketmine\command\defaults\PluginsCommand;
 use pocketmine\command\defaults\SaveCommand;
-use pocketmine\command\defaults\SaveOffCommand;
-use pocketmine\command\defaults\SaveOnCommand;
 use pocketmine\command\defaults\SayCommand;
-use pocketmine\command\defaults\SeedCommand;
 use pocketmine\command\defaults\SetWorldSpawnCommand;
-use pocketmine\command\defaults\SpawnpointCommand;
 use pocketmine\command\defaults\StatusCommand;
 use pocketmine\command\defaults\StopCommand;
 use pocketmine\command\defaults\TeleportCommand;
-use pocketmine\command\defaults\TellCommand;
 use pocketmine\command\defaults\TimeCommand;
 use pocketmine\command\defaults\TimingsCommand;
 use pocketmine\command\defaults\TitleCommand;
@@ -61,7 +49,6 @@ use pocketmine\command\defaults\TransferServerCommand;
 use pocketmine\command\defaults\VanillaCommand;
 use pocketmine\command\defaults\VersionCommand;
 use pocketmine\command\defaults\WhitelistCommand;
-use pocketmine\command\defaults\XpCommand;
 use pocketmine\command\utils\CommandStringHelper;
 use pocketmine\command\utils\InvalidCommandSyntaxException;
 use pocketmine\lang\KnownTranslationFactory;
@@ -93,41 +80,30 @@ class SimpleCommandMap implements CommandMap{
 	private function setDefaultCommands() : void{
 		$this->registerAll("pocketmine", [
 			new ClearCommand(),
-			new DefaultGamemodeCommand(),
 			new DeopCommand(),
-			new DifficultyCommand(),
 			new DumpMemoryCommand(),
 			new EffectCommand(),
 			new EnchantCommand(),
 			new GamemodeCommand(),
 			new GarbageCollectorCommand(),
 			new GiveCommand(),
-			new HelpCommand(),
-			new KickCommand(),
 			new KillCommand(),
 			new ListCommand(),
-			new MeCommand(),
 			new OpCommand(),
 			new ParticleCommand(),
 			new PluginsCommand(),
 			new SaveCommand(),
-			new SaveOffCommand(),
-			new SaveOnCommand(),
 			new SayCommand(),
-			new SeedCommand(),
 			new SetWorldSpawnCommand(),
-			new SpawnpointCommand(),
 			new StatusCommand(),
 			new StopCommand(),
 			new TeleportCommand(),
-			new TellCommand(),
 			new TimeCommand(),
 			new TimingsCommand(),
 			new TitleCommand(),
 			new TransferServerCommand(),
 			new VersionCommand(),
-			new WhitelistCommand(),
-			new XpCommand(),
+			new WhitelistCommand()
 		]);
 	}
 
@@ -198,8 +174,8 @@ class SimpleCommandMap implements CommandMap{
 		return true;
 	}
 
-	public function dispatch(CommandSender $sender, string $commandLine) : bool{
-		$args = CommandStringHelper::parseQuoteAware($commandLine);
+	public function dispatch(CommandSender $sender, string $cmdLine) : bool{
+		$args = CommandStringHelper::parseQuoteAware($cmdLine);
 
 		$sentCommandLabel = array_shift($args);
 		if($sentCommandLabel !== null && ($target = $this->getCommand($sentCommandLabel)) !== null){

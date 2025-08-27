@@ -77,4 +77,10 @@ final class YmlServerProperties{
 	public const SETTINGS_SHUTDOWN_MESSAGE = 'settings.shutdown-message';
 	public const TICKS_PER = 'ticks-per';
 	public const TICKS_PER_AUTOSAVE = 'ticks-per.autosave';
+
+	public const PERFORMANCE = 'performance';
+	public const PERFORMANCE_COLISSIONS = 'performance.collisions';
+	public const PERFORMANCE_BLOCK_INTERSECTIONS = 'performance.block-intersections';
+	public const PERFORMANCE_ENTITY_COLLISIONS = 'performance.entity-collisions';
+	public const PERFORMANCE_FALLING_BLOCKS = 'performance.falling-blocks';
 }
