@@ -123,6 +123,7 @@ use pocketmine\permission\PermissibleBase;
 use pocketmine\permission\PermissibleDelegateTrait;
 use pocketmine\player\chat\StandardChatFormatter;
 use pocketmine\Server;
+use pocketmine\ServerConfigGroup;
 use pocketmine\ServerProperties;
 use pocketmine\timings\Timings;
 use pocketmine\utils\AssumptionFailedError;
@@ -311,12 +312,15 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	protected array $forms = [];
 
 	protected \Logger $logger;
+	protected ServerConfigGroup $configGroup;
 
 	protected ?SurvivalBlockBreakHandler $blockBreakHandler = null;
 
 	public function __construct(Server $server, NetworkSession $session, PlayerInfo $playerInfo, bool $authenticated, Location $spawnLocation, ?CompoundTag $namedtag){
 		$username = TextFormat::clean($playerInfo->getUsername());
 		$this->logger = new \PrefixedLogger($server->getLogger(), "Player: $username");
+
+		$this->configGroup = Server::getInstance()->getConfigGroup();
 
 		$this->server = $server;
 		$this->networkSession = $session;
@@ -1454,6 +1458,54 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 	protected function calculateFallDamage(float $fallDistance) : float{
 		return $this->flying ? 0 : parent::calculateFallDamage($fallDistance);
+	}
+
+	protected function move(float $dx, float $dy, float $dz) : void{
+		$collisions = $this->configGroup->getPropertyBool("performance.collisions", true);
+		if($collisions) {
+			parent::move($dx, $dy, $dz);
+			return; // Use the default entity collision handling
+		}
+
+		Timings::$entityMove->startTiming();
+
+		// Simplified movement handling without collision checks
+		$oldX = $this->location->x;
+		$oldZ = $this->location->z;
+
+		Timings::$entityMoveCollision->startTiming();
+		$this->processMovement(new Vector3($dx, $dy, $dz));
+		Timings::$entityMoveCollision->stopTiming();
+
+		$frostWalkerLevel = $this->getFrostWalkerLevel();
+		if($frostWalkerLevel > 0 && (abs($this->location->x - $oldX) > self::MOTION_THRESHOLD || abs($this->location->z - $oldZ) > self::MOTION_THRESHOLD)){
+			$this->applyFrostWalker($frostWalkerLevel);
+		}
+
+		Timings::$entityMove->stopTiming();
+	}
+
+	private function processMovement(Vector3 $pos) : void{
+		$dx = $pos->x;
+		$dy = $pos->y;
+		$dz = $pos->z;
+
+		$this->boundingBox->offset($dx, $dy, $dz);
+		$this->location = new Location(
+			($this->boundingBox->minX + $this->boundingBox->maxX) / 2,
+			$this->boundingBox->minY - $this->ySize,
+			($this->boundingBox->minZ + $this->boundingBox->maxZ) / 2,
+			$this->location->world,
+			$this->location->yaw,
+			$this->location->pitch
+		);
+
+		$this->getWorld()->onEntityMoved($this);
+
+		$blockIntersections = $this->configGroup->getPropertyBool("performance.block-intersections", true);
+		if($blockIntersections) {
+			$this->checkBlockIntersections();
+		}
 	}
 
 	public function jump() : void{

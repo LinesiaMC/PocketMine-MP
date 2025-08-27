@@ -234,7 +234,7 @@ class NetworkSession{
 			$this->onSessionStartSuccess(...)
 		));
 
-		$this->addRepeatedPacketFilter(InventoryTransactionPacket::NETWORK_ID);
+		//$this->addRepeatedPacketFilter(InventoryTransactionPacket::NETWORK_ID);
 
 		$this->manager->add($this);
 		$this->logger->info($this->server->getLanguage()->translate(KnownTranslationFactory::pocketmine_network_session_open()));
