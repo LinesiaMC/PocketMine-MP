@@ -456,9 +456,10 @@ class NetworkSession{
 			try{
 				$stream = new BinaryStream($decompressed);
 				foreach(PacketBatch::decodeRaw($stream) as $buffer){
-					if($this->checkRepeatedPacketFilter($buffer)){
+					// TODO : BYPASS ATTACK MOB SPAM
+					/*if($this->checkRepeatedPacketFilter($buffer)){
 						continue;
-					}
+					}*/
 
 					$this->gamePacketLimiter->decrement();
 					$packet = $this->packetPool->getPacket($buffer);
