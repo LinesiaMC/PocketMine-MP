@@ -606,7 +606,7 @@ final class VanillaItems{
 		self::register("suspicious_stew", fn(IID $id) => new SuspiciousStew($id, "Suspicious Stew"));
 		self::register("sweet_berries", fn(IID $id) => new SweetBerries($id, "Sweet Berries"));
 		self::register("torchflower_seeds", fn(IID $id) => new TorchflowerSeeds($id, "Torchflower Seeds"));
-		self::register("totem", fn(IID $id) => new Totem($id, "TotemManager of Undying"));
+		self::register("totem", fn(IID $id) => new Totem($id, "Totem of Undying"));
 		self::register("warped_sign", fn(IID $id) => new ItemBlockWallOrFloor($id, Blocks::WARPED_SIGN(), Blocks::WARPED_WALL_SIGN()));
 		self::register("water_bucket", fn(IID $id) => new LiquidBucket($id, "Water Bucket", Blocks::WATER()));
 		self::register("wheat", fn(IID $id) => new Item($id, "Wheat"));
