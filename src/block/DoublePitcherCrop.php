@@ -103,7 +103,7 @@ final class DoublePitcherCrop extends DoublePlant{
 
 	public function onRandomTick() : void{
 		//only the bottom half of the plant can grow randomly
-		if(CropGrowthHelper::canGrow($this) && !$this->top){
+		if(CropGrowthHelper::canGrow() && !$this->top){
 			$this->grow(null);
 		}
 	}

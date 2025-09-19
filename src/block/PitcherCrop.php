@@ -94,13 +94,10 @@ final class PitcherCrop extends Flowable{
 	}
 
 	public function ticksRandomly() : bool{
-		return true;
+		return false;
 	}
 
 	public function onRandomTick() : void{
-		if(CropGrowthHelper::canGrow($this)){
-			$this->grow(null);
-		}
 	}
 
 	public function asItem() : Item{

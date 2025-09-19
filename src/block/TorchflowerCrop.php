@@ -75,13 +75,10 @@ final class TorchflowerCrop extends Flowable{
 	}
 
 	public function ticksRandomly() : bool{
-		return true;
+		return false;
 	}
 
 	public function onRandomTick() : void{
-		if(CropGrowthHelper::canGrow($this)){
-			BlockEventHelper::grow($this, $this->getNextState(), null);
-		}
 	}
 
 	public function asItem() : Item{

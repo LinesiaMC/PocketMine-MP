@@ -65,7 +65,7 @@ abstract class Stem extends Crops{
 	}
 
 	public function onRandomTick() : void{
-		if($this->facing === Facing::UP && CropGrowthHelper::canGrow($this)){
+		if($this->facing === Facing::UP && CropGrowthHelper::canGrow()){
 			$world = $this->position->getWorld();
 			if($this->age < self::MAX_AGE){
 				$block = clone $this;
