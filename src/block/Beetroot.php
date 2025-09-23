@@ -32,7 +32,7 @@ class Beetroot extends Crops{
 	public function getDropsForCompatibleTool(Item $item) : array{
 		if($this->age >= self::MAX_AGE){
 			return [
-				VanillaItems::BEETROOT(),
+				VanillaItems::BEETROOT()->setCount(FortuneDropHelper::binomialItem($item, $this,1)),
 				VanillaItems::BEETROOT_SEEDS()->setCount(FortuneDropHelper::binomialNoItem(0))
 			];
 		}

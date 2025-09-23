@@ -23,8 +23,15 @@ declare(strict_types=1);
 
 namespace pocketmine\block\utils;
 
+use pocketmine\block\Block;
+use pocketmine\block\Crops;
+use pocketmine\block\Wood;
+use pocketmine\item\Axe;
 use pocketmine\item\enchantment\VanillaEnchantments;
+use pocketmine\item\Hoe;
 use pocketmine\item\Item;
+use pocketmine\item\Pickaxe;
+use pocketmine\world\generator\populator\Ore;
 use function max;
 use function min;
 use function mt_getrandmax;
@@ -92,6 +99,46 @@ final class FortuneDropHelper{
 			}
 		}
 		return $count;
+	}
+
+	public static function binomialItem(Item $usedItem, Block $block, int $min, int $rolls = 3, float $chance = 4/7): int {
+		$fortuneLevel = 0;
+
+		if (self::matchesFortuneContext($usedItem, $block)) {
+			$fortuneLevel = $usedItem->getEnchantmentLevel(VanillaEnchantments::FORTUNE());
+		}
+
+		$totalRolls = $rolls + $fortuneLevel;
+
+		$count = $min;
+		for ($i = 0; $i < $totalRolls; ++$i) {
+			if (mt_rand() / mt_getrandmax() < $chance) {
+				++$count;
+			}
+		}
+		return $count;
+	}
+
+	/**
+	 * Retourne true si l’outil/Bloc correspondent pour appliquer Fortune :
+	 * - Hoe sur cultures (Crops)
+	 * - Pickaxe sur minerais (Ore)
+	 * - Axe sur blocs « bois » (tout bloc dont l’outil conseillé est la hache)
+	 */
+	private static function matchesFortuneContext(Item $usedItem, Block $block): bool {
+		if ($usedItem instanceof Hoe && $block instanceof Crops) {
+			return true;
+		}
+
+		if ($usedItem instanceof Pickaxe && $block instanceof Ore) {
+			return true;
+		}
+
+		if ($usedItem instanceof Axe && $block instanceof Wood) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

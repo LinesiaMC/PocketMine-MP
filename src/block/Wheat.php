@@ -32,7 +32,7 @@ class Wheat extends Crops{
 	public function getDropsForCompatibleTool(Item $item) : array{
 		if($this->age >= self::MAX_AGE){
 			return [
-				VanillaItems::WHEAT(),
+				VanillaItems::WHEAT()->setCount(FortuneDropHelper::binomialItem($item, $this,1)),
 				VanillaItems::WHEAT_SEEDS()->setCount(FortuneDropHelper::binomialNoItem(0))
 			];
 		}else{

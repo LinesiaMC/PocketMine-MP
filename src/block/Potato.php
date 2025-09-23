@@ -31,14 +31,10 @@ use function mt_rand;
 class Potato extends Crops{
 
 	public function getDropsForCompatibleTool(Item $item) : array{
-		$result = [
+		return [
 			//min/max would be 2-5 in Java
-			VanillaItems::POTATO()->setCount($this->age >= self::MAX_AGE ? FortuneDropHelper::binomialNoItem(1) : 1)
+			VanillaItems::POTATO()->setCount($this->age >= self::MAX_AGE ? FortuneDropHelper::binomialItem($item, $this,1) : 1)
 		];
-		if($this->age >= self::MAX_AGE && mt_rand(0, 49) === 0){
-			$result[] = VanillaItems::POISONOUS_POTATO();
-		}
-		return $result;
 	}
 
 	public function asItem() : Item{
