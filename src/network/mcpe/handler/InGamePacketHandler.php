@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\handler;
 
 use pocketmine\block\BaseSign;
-use pocketmine\block\FenceGate;
 use pocketmine\block\Lectern;
 use pocketmine\block\tile\Sign;
 use pocketmine\block\utils\SignText;
@@ -45,7 +44,6 @@ use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\StringTag;
-use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\InventoryManager;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\ActorEventPacket;
@@ -120,6 +118,7 @@ use function is_nan;
 use function json_decode;
 use function max;
 use function mb_strlen;
+use function microtime;
 use function sprintf;
 use function str_starts_with;
 use function strlen;
@@ -130,6 +129,9 @@ use const JSON_THROW_ON_ERROR;
  */
 class InGamePacketHandler extends PacketHandler{
 	private const MAX_FORM_RESPONSE_DEPTH = 2; //modal/simple will be 1, custom forms 2 - they will never contain anything other than string|int|float|bool|null
+
+	protected float $lastRightClickTime = 0.0;
+	protected ?UseItemTransactionData $lastRightClickData = null;
 
 	protected ?Vector3 $lastPlayerAuthInputPosition = null;
 	protected ?float $lastPlayerAuthInputYaw = null;
@@ -196,6 +198,22 @@ class InGamePacketHandler extends PacketHandler{
 			$this->player->setRotation($yaw, $pitch);
 		}
 
+		$hasMoved = $this->lastPlayerAuthInputPosition === null || !$this->lastPlayerAuthInputPosition->equals($rawPos);
+		$newPos = $rawPos->subtract(0, 1.62, 0)->round(4);
+
+		if($this->forceMoveSync && $hasMoved){
+			$curPos = $this->player->getLocation();
+
+			if($newPos->distanceSquared($curPos) > 1){  //Tolerate up to 1 block to avoid problems with client-sided physics when spawning in blocks
+				$this->session->getLogger()->debug("Got outdated pre-teleport movement, received " . $newPos . ", expected " . $curPos);
+				//Still getting movements from before teleport, ignore them
+				return true;
+			}
+
+			// Once we get a movement within a reasonable distance, treat it as a teleport ACK and remove position lock
+			$this->forceMoveSync = false;
+		}
+
 		$inputFlags = $packet->getInputFlags();
 		if($this->lastPlayerAuthInputFlags === null || !$inputFlags->equals($this->lastPlayerAuthInputFlags)){
 			$this->lastPlayerAuthInputFlags = $inputFlags;
@@ -226,6 +244,11 @@ class InGamePacketHandler extends PacketHandler{
 			}
 		}
 
+		if(!$this->forceMoveSync && $hasMoved){
+			$this->lastPlayerAuthInputPosition = $rawPos;
+			//TODO: this packet has WAYYYYY more useful information that we're not using
+			$this->player->handleMovement($newPos);
+		}
 
 		/**
 		 * The client sends -0.0784 when on ground
@@ -501,6 +524,22 @@ class InGamePacketHandler extends PacketHandler{
 		$this->processMovements($data->getPlayerPosition(), fixHeadOffset: false);
 		switch($data->getActionType()){
 			case UseItemTransactionData::ACTION_CLICK_BLOCK:
+				//TODO: start hack for client spam bug
+				$clickPos = $data->getClickPosition();
+				$spamBug = ($this->lastRightClickData !== null &&
+					microtime(true) - $this->lastRightClickTime < 0.1 && //100ms
+					$this->lastRightClickData->getPlayerPosition()->distanceSquared($data->getPlayerPosition()) < 0.00001 &&
+					$this->lastRightClickData->getBlockPosition()->equals($data->getBlockPosition()) &&
+					$this->lastRightClickData->getClickPosition()->distanceSquared($clickPos) < 0.00001 //signature spam bug has 0 distance, but allow some error
+				);
+				//get rid of continued spam if the player clicks and holds right-click
+				$this->lastRightClickData = $data;
+				$this->lastRightClickTime = microtime(true);
+				if($spamBug){
+					return true;
+				}
+				//TODO: end hack for client spam bug
+
 				self::validateFacing($data->getFace());
 
 				$blockPos = $data->getBlockPosition();
@@ -706,6 +745,7 @@ class InGamePacketHandler extends PacketHandler{
 					$this->syncBlocksNearby($pos, $face);
 				}
 				$this->lastBlockAttacked = $blockPosition;
+
 				break;
 
 			case PlayerAction::ABORT_BREAK:
