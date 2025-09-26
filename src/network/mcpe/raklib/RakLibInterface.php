@@ -199,33 +199,6 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 		$this->sessions[$sessionId] = $session;
 	}
 
-	/**
-	 * @param int $sessionId
-	 * @param string $address
-	 * @param int $port
-	 * @param int $clientID
-	 * @return void
-	 * @throws ReflectionException
-	 */
-	public function onClientConnect(int $sessionId, string $address, int $port, int $clientID) : void{
-		$session = new NetworkSession(
-			$this->getServer(),
-			$this->getNetwork()->getSessionManager(),
-			PacketPool::getInstance(),
-			new RakLibPacketSender($sessionId, $this),
-			$this->getPacketBroadcaster(),
-			$this->getEntityEventBroadcaster(),
-			ZlibCompressor::getInstance(), //TODO: this shouldn't be hardcoded, but we might need the RakNet protocol version to select it
-			$this->getTypeConverter(),
-			$address,
-			$port
-		);
-
-		$sessions = ReflectionUtils::getProperty(RakLibInterfacePM::class, $this, "sessions");
-		$sessions[$sessionId] = $session;
-		ReflectionUtils::setProperty(RakLibInterfacePM::class, $this, "sessions", $sessions);
-	}
-
 	public function onPacketReceive(int $sessionId, string $packet) : void{
 		if(isset($this->sessions[$sessionId])){
 			if($packet === "" || $packet[0] !== self::MCPE_RAKNET_PACKET_ID){
