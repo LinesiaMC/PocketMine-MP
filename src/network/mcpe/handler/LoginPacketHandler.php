@@ -23,10 +23,12 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\handler;
 
+use InvalidArgumentException;
 use pocketmine\entity\InvalidSkinException;
 use pocketmine\event\player\PlayerPreLoginEvent;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\lang\Translatable;
+use pocketmine\network\InvalidPacketException;
 use pocketmine\network\mcpe\auth\ProcessLegacyLoginTask;
 use pocketmine\network\mcpe\auth\ProcessOpenIdLoginTask;
 use pocketmine\network\mcpe\JwtException;
@@ -46,6 +48,12 @@ use pocketmine\player\Player;
 use pocketmine\player\PlayerInfo;
 use pocketmine\player\XboxLivePlayerInfo;
 use pocketmine\Server;
+use pocketmine\utils\Base64Validator;
+use pocketmine\utils\constants\TitleId;
+use pocketmine\utils\HashValidator;
+use pocketmine\utils\HexChecker;
+use pocketmine\utils\PacketUtils;
+use pocketmine\utils\UUIDValidator;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use function chr;
@@ -166,6 +174,129 @@ class LoginPacketHandler extends PacketHandler{
 
 		$clientData = $this->parseClientData($packet->clientDataJwt);
 
+		$this->handleFromClientData($clientData);
+
+		$deviceOs = $clientData->DeviceOS;
+		$deviceId = $clientData->DeviceId;
+
+		if(TitleId::equal(TitleId::ANDROID, $deviceOs)) {
+			if(!HexChecker::isHexadecimal($deviceId)) {
+				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId (ANDROID)");
+				throw new InvalidPacketException("Invalid DeviceId (ANDROID)");
+			}
+		} else if(TitleId::equal(TitleId::IOS, $deviceOs)) {
+			if(!HashValidator::isValidHash($deviceId)) {
+				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId (IOS)");
+				throw new InvalidPacketException("Invalid DeviceId (IOS)");
+			}
+
+			if(!HashValidator::isValidMD5($deviceId)) {
+				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid MD5 DeviceId (IOS)");
+				throw new InvalidPacketException("Invalid MD5 DeviceId (IOS)");
+			}
+		} else if(TitleId::equal(TitleId::XBOX, $deviceOs)) {
+			if(!Base64Validator::isBase64($deviceId)) {
+				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId is not b64 (XBOX)");
+				throw new InvalidPacketException("Invalid DeviceId is not b64 (XBOX)");
+			}
+		} else {
+			if(!UUIDValidator::isValidUUID($deviceId)) {
+				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId ($deviceId)");
+				throw new InvalidPacketException("Invalid DeviceId ($deviceId)");
+			}
+
+			$deviceIdVersion = UUIDValidator::getUUIDVersion($deviceId);
+			if(TitleId::equal(TitleId::NINTENDO, $deviceOs)) {
+				if($deviceIdVersion != 5) {
+					$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId version (SWITCH)");
+					throw new InvalidPacketException("Invalid DeviceId version (SWITCH)");
+				}
+			} else if($deviceIdVersion != 3) {
+				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId version (" . $deviceIdVersion . ")");
+				throw new InvalidPacketException("Invalid DeviceId version (" . $deviceIdVersion . ")");
+			}
+		}
+
+		$selfSignedId = $clientData->SelfSignedId;
+		if(!UUIDValidator::isValidUUID($selfSignedId)) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid SelfSignedId");
+			throw new InvalidPacketException("Invalid SelfSignedId");
+		}
+		if(UUIDValidator::getUUIDVersion($selfSignedId) != 3) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid SelfSignedId version (" . $selfSignedId . ")");
+			throw new InvalidPacketException("Invalid SelfSignedId version (" . $selfSignedId . ")");
+		}
+		if($deviceId === $selfSignedId) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username SelfSignedId equal DeviceId");
+			throw new InvalidPacketException("SelfSignedId equal DeviceId");
+		}
+
+		if(empty(trim($clientData->PlayFabId))) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid PlayFabId");
+			throw new InvalidPacketException("Invalid PlayFabId");
+		}
+
+		if(!str_contains($clientData->SkinColor, "#")) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username SkinColor does not contains #");
+			throw new InvalidPacketException("SkinColor does not contains #");
+		}
+
+		if(TitleId::equal(TitleId::NINTENDO, $deviceOs)) {
+			if($clientData->CompatibleWithClientSideChunkGen) {
+				$this->server->getLogger()->alert("LOGIN LOG : $username Send CompatibleWithClientSideChunkGen as true (SWITCH)");
+				throw new InvalidPacketException("Send CompatibleWithClientSideChunkGen as true (SWITCH)");
+			}
+		} else if(!$clientData->CompatibleWithClientSideChunkGen) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username Send CompatibleWithClientSideChunkGen as false (OTHER)");
+			throw new InvalidPacketException("Send CompatibleWithClientSideChunkGen as false (OTHER)");
+		}
+
+		$languagesCode = [
+			"fr_CA", "fr_FR",
+			"bg_BG", "cs_CZ", "da_DK",
+			"de_DE", "el_GR", "en_GB",
+			"en_US", "es_ES", "es_MX",
+			"fi_FI", "hu_HU", "id_ID",
+			"it_IT", "ja_JP", "ko_KR",
+			"nb_NO", "nl_NL", "pl_PL",
+			"pt_BR", "pt_PT", "ru_RU",
+			"sk_SK", "sv_SE", "tr_TR", "uk_UA",
+			"zh_CN", "zh_TW"
+		];
+		$languageCode = $clientData->LanguageCode;
+		if(!in_array($languageCode, $languagesCode)) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid LanguageCode ({$languageCode})");
+			throw new InvalidPacketException("Invalid LanguageCode ({$languageCode})");
+		}
+
+		if(count(explode(".", $clientData->GameVersion)) != 3) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid GameVersion format");
+			throw new InvalidPacketException("Invalid GameVersion format");
+		}
+
+		$skinId = $clientData->SkinId;
+		if(str_contains($skinId, "Custom") && !str_contains($skinId, $deviceId)) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid SkinId");
+			throw new InvalidPacketException("Invalid SkinId");
+		}
+
+		$personaSkin = $clientData->PersonaSkin;
+		if($personaSkin && !str_contains($skinId, "persona")) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username PersonaSkin as true without persona in SkinId (" . $skinId . ")");
+			throw new InvalidPacketException("PersonaSkin as true without persona in SkinId (" . $skinId . ")");
+		}
+
+		$res = intval(substr((string) $clientData->ClientRandomId, 0, 10));
+		if(($c = abs($res - time())) <= 60) {
+			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid ClientRandomId (diff: {$c})");
+			throw new InvalidPacketException("Invalid ClientRandomId (diff: {$c})");
+		}
+
+		if($clientData->DeviceModel === "PrismarineJS"){
+			$this->server->getLogger()->alert("LOGIN LOG : $username DeviceModel Prismarine JS");
+			throw new InvalidPacketException("DeviceModel Prismarine JS");
+		}
+
 		try{
 			$skin = $this->session->getTypeConverter()->getSkinAdapter()->fromSkinData(ClientDataToSkinDataHelper::fromClientData($clientData));
 		}catch(\InvalidArgumentException | InvalidSkinException $e){
@@ -217,6 +348,64 @@ class LoginPacketHandler extends PacketHandler{
 		}
 
 		return $ev->isAuthRequired();
+	}
+
+	/**
+	 * @throws InvalidArgumentException
+	 */
+	public function handleFromClientData(ClientData $clientData) : void{
+		if(!in_array(($c = $clientData->SkinImageWidth), [32, 64, 128, 256])) {
+			throw new InvalidPacketException("Invalid SkinWidth ({$c})");
+		}
+		if(!in_array(($c = $clientData->SkinImageHeight), [32, 64, 128, 256])) {
+			throw new InvalidPacketException("Invalid SkinHeight ({$c})");
+		}
+
+		$geometryData = self::safeB64Decode($clientData->SkinGeometryData);
+		$geometryJSON = json_decode($geometryData, true);
+		$geometry = json_encode($geometryJSON, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		$geometryDataLength = strlen($geometry);
+		if(($geometryDataLength > PacketUtils::DEFAULT_GEOMETRY_SIZE && ($geometryDataLength - PacketUtils::DEFAULT_GEOMETRY_SIZE) >= 28530)) {
+			throw new InvalidPacketException("Invalid Geometry size ({$geometryDataLength})");
+		}
+
+		$capeData = $clientData->CapeData;
+		if($capeData !== "") {
+			if(($c = $clientData->CapeImageWidth) !== 64) {
+				throw new InvalidPacketException("Invalid CapeWidth ({$c})");
+			}
+			if(($c = $clientData->CapeImageHeight) !== 32) {
+				throw new InvalidPacketException("Invalid CapeHeight ({$c})");
+			}
+		}
+
+		if(($c = strlen($clientData->SkinAnimationData)) >= 1000) { # In reality I have no idea
+			throw new InvalidPacketException("Invalid AnimationData ({$c})");
+		}
+		if(($c = count($clientData->AnimatedImageData)) >= 25) {
+			throw new InvalidPacketException("Invalid Skin Animations ({$c})");
+		}
+
+		if(($c = count($clientData->PersonaPieces)) >= 25) {
+			throw new InvalidPacketException("Invalid PersonaPieces ({$c})");
+		}
+		if(($c = count($clientData->PieceTintColors)) >= 25) {
+			throw new InvalidPacketException("Invalid PieceTintColors ({$c})");
+		}
+		if(($c = $clientData->ArmSize) == "") {
+			throw new InvalidPacketException("Invalid ArmSize ({$c})");
+		}
+	}
+
+	/**
+	 * @throws InvalidArgumentException
+	 */
+	private static function safeB64Decode(string $base64) : string{
+		$result = base64_decode($base64, true);
+		if($result === false){
+			throw new InvalidArgumentException("SkinGeometryData: Malformed base64, cannot be decoded");
+		}
+		return $result;
 	}
 
 	/**

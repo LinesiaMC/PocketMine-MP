@@ -98,7 +98,7 @@ use pocketmine\network\mcpe\protocol\types\PlayerAction;
 use pocketmine\network\mcpe\protocol\types\PlayerAuthInputFlags;
 use pocketmine\network\mcpe\protocol\types\PlayerBlockActionStopBreak;
 use pocketmine\network\mcpe\protocol\types\PlayerBlockActionWithBlockInfo;
-use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
+use pocketmine\network\mcpe\protocol\types\skin\SkinData;
 use pocketmine\network\PacketHandlingException;
 use pocketmine\player\Player;
 use pocketmine\utils\AssumptionFailedError;
@@ -144,6 +144,10 @@ class InGamePacketHandler extends PacketHandler{
 
 	protected ?string $lastRequestedFullSkinId = null;
 
+	protected ?int $firstCommandVersion = null;
+	protected ?int $tick = null;
+	protected bool $respawned = true;
+
 	public function __construct(
 		private Player $player,
 		private NetworkSession $session,
@@ -151,6 +155,37 @@ class InGamePacketHandler extends PacketHandler{
 	){}
 
 	public function handleText(TextPacket $packet) : bool{
+		$username = $this->player->getName();
+
+		if($packet->type != TextPacket::TYPE_CHAT) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Text type");
+			return true;
+		}
+		if(!empty($packet->parameters)) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Text parameters");
+			return true;
+		}
+		if($packet->needsTranslation) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Text needsTranslation");
+			return true;
+		}
+		if($packet->sourceName != $this->session->getDisplayName()) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Text sourceName (have: {$this->session->getDisplayName()}, given: {$packet->sourceName})");
+			return true;
+		}
+		$player = $this->session->getPlayer();
+		if(!is_null($player)) {
+			if($packet->xboxUserId != $player->getXuid()) {
+				$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Text xuid (have: {$player->getXuid()}, given: {$packet->xboxUserId})");
+				return true;
+			}
+		}
+
+		if(($c = strlen($packet->message)) >= 400) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Text message length (given: {$c}, max: " . 400 . ")");
+			return true;
+		}
+
 		if($packet->type === TextPacket::TYPE_CHAT){
 			return $this->player->chat($packet->message);
 		}
@@ -721,6 +756,19 @@ class InGamePacketHandler extends PacketHandler{
 	}
 
 	public function handlePlayerAction(PlayerActionPacket $packet) : bool{
+		$handler = $this->session->getHandler();
+		$username = $this->player->getName();
+		if($handler instanceof DeathPacketHandler) {
+			if($packet->action === PlayerAction::RESPAWN){
+				$this->respawned = true;
+			}
+		}
+
+		if($packet->action === PlayerAction::BUILD_DENIED) {
+			$this->player->getServer()->getLogger()->info("$username Invalid PlayerAction Build Denied");
+			return true;
+		}
+
 		return $this->handlePlayerActionFromData($packet->action, $packet->blockPosition, $packet->face);
 	}
 
@@ -934,6 +982,26 @@ class InGamePacketHandler extends PacketHandler{
 			$this->player->chat($packet->command);
 			return true;
 		}
+
+		$username = $this->player->getName();
+
+		if(is_null($this->firstCommandVersion)) {
+			$this->firstCommandVersion = $packet->version;
+		} else if($this->firstCommandVersion != $packet->version) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Command version (given: {$packet->version}, first: {$this->firstCommandVersion})");
+			return true;
+		}
+
+		$cleanCommand = TextFormat::clean($packet->command);
+		$eCount = substr_count($cleanCommand, "@e");
+		$aCount = substr_count($cleanCommand, "@a");
+		$totalCount = $eCount + $aCount;
+
+		if($totalCount >= 5) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Command arguments (spammed @e or @a)");
+			return true;
+		}
+
 		return false;
 	}
 
@@ -948,6 +1016,63 @@ class InGamePacketHandler extends PacketHandler{
 			$this->session->getLogger()->debug("Refused duplicate skin change request");
 			return true;
 		}
+
+		$data = $packet->skin;
+		$username = $this->player->getName();
+
+		$skinImage = $data->getSkinImage();
+		if(!in_array(($c = $skinImage->getWidth()), [64, 128, 256])) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid SkinWidth ({$c})");
+			return true;
+		}
+		if(!in_array(($c = $skinImage->getHeight()), [64, 128, 256])) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid SkinHeight ({$c})");
+			return true;
+		}
+
+		$geometryData = $data->getGeometryData();
+		$geometryJSON = json_decode($geometryData, true);
+		$geometry = json_encode($geometryJSON, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		$geometryDataLength = strlen($geometry);
+		if(($geometryDataLength > 4265 && ($geometryDataLength - 4265) >= 28530) || $geometryDataLength < 9) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Geometry size ({$geometryDataLength})");
+			return true;
+		}
+
+		$capeImage = $data->getCapeImage();
+		if($capeImage->getData() !== "") {
+			if(($c = $capeImage->getWidth()) !== 64) {
+				$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid CapeWidth ({$c})");
+				return true;
+			}
+			if(($c = $capeImage->getHeight()) !== 32) {
+				$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid CapeHeight ({$c})");
+				return true;
+			}
+		}
+
+		if(($c = strlen($data->getAnimationData())) >= 1000) { # In reality I have no idea
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid AnimationData ({$c})");
+			return true;
+		}
+		if(($c = count($data->getAnimations())) >= 25) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid Skin Animations ({$c})");
+			return true;
+		}
+
+		if(($c = count($data->getPersonaPieces())) >= 25) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid PersonaPieces ({$c})");
+			return true;
+		}
+		if(($c = count($data->getPieceTintColors())) >= 25) {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid PersonaPieceTintColor ({$c})");
+			return true;
+		}
+		if(($c = $data->getArmSize()) == "") {
+			$this->player->getServer()->getLogger()->info("LOG PACKET : $username Invalid ArmSize ({$c})");
+			return true;
+		}
+
 		$this->lastRequestedFullSkinId = $packet->skin->getFullSkinId();
 
 		$this->session->getLogger()->debug("Processing skin change request");

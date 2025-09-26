@@ -909,10 +909,6 @@ class Server{
 
 			$this->authKeyProvider = new AuthKeyProvider(new \PrefixedLogger($this->logger, "Minecraft Auth Key Provider"), $this->asyncPool);
 
-			if($this->configGroup->getConfigBool(ServerProperties::HARDCORE, false) && $this->getDifficulty() < World::DIFFICULTY_HARD){
-				$this->configGroup->setConfigInt(ServerProperties::DIFFICULTY, World::DIFFICULTY_HARD);
-			}
-
 			@cli_set_process_title($this->getName() . " " . $this->getPocketMineVersion());
 
 			$this->serverID = Utils::getMachineUniqueId($this->getIp() . $this->getPort());
@@ -987,11 +983,6 @@ class Server{
 				return;
 			}
 
-			if($this->configGroup->getPropertyBool(Yml::ANONYMOUS_STATISTICS_ENABLED, true)){
-				$this->sendUsageTicker = self::TICKS_PER_STATS_REPORT;
-				$this->sendUsage(SendUsageTask::TYPE_OPEN);
-			}
-
 			$this->configGroup->save();
 
 			$this->logger->info($this->language->translate(KnownTranslationFactory::pocketmine_server_defaultGameMode($this->getGamemode()->getTranslatableName())));
@@ -1002,10 +993,7 @@ class Server{
 			$this->subscribeToBroadcastChannel(self::BROADCAST_CHANNEL_ADMINISTRATIVE, $forwarder);
 			$this->subscribeToBroadcastChannel(self::BROADCAST_CHANNEL_USERS, $forwarder);
 
-			//TODO: move console parts to a separate component
-			if($this->configGroup->getPropertyBool(Yml::CONSOLE_ENABLE_INPUT, true)){
-				$this->console = new ConsoleReaderChildProcessDaemon($this->logger);
-			}
+			$this->console = new ConsoleReaderChildProcessDaemon($this->logger);
 
 			$this->tickProcessor();
 			$this->forceShutdown();
@@ -1594,6 +1582,13 @@ class Server{
 
 	public function isLanguageForced() : bool{
 		return $this->forceLanguage;
+	}
+
+	/**
+	 * @internal
+	 */
+	public function getAuthKeyProvider() : AuthKeyProvider{
+		return $this->authKeyProvider;
 	}
 
 	public function getNetwork() : Network{
