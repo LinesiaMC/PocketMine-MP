@@ -286,9 +286,9 @@ abstract class PluginBase implements Plugin, CommandExecutor{
 		$this->getConfig()->save();
 	}
 
-	public function saveDefaultConfig() : bool{
+	public function saveDefaultConfig(bool $replace = false) : bool{
 		if(!file_exists($this->configFile)){
-			return $this->saveResource("config.yml", false);
+			return $this->saveResource("config.yml", $replace);
 		}
 		return false;
 	}
