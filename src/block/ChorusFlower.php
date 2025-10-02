@@ -158,7 +158,7 @@ final class ChorusFlower extends Flowable implements Ageable{
 		return $tx;
 	}
 
-	public function ticksRandomly() : bool{ return $this->age < self::MAX_AGE; }
+	public function ticksRandomly() : bool{ return false; }
 
 	public function onRandomTick() : void{
 		$world = $this->position->getWorld();

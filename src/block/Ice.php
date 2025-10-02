@@ -47,7 +47,7 @@ class Ice extends Transparent{
 	}
 
 	public function ticksRandomly() : bool{
-		return true;
+		return false;
 	}
 
 	public function onRandomTick() : void{

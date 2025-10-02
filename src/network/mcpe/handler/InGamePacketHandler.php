@@ -805,7 +805,7 @@ class InGamePacketHandler extends PacketHandler{
 				//unused
 				break;
 			case PlayerAction::STOP_SLEEPING:
-				$this->player->stopSleep();
+				//$this->player->stopSleep();
 				break;
 			case PlayerAction::CRACK_BREAK:
 				self::validateFacing($face);

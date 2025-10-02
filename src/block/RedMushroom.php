@@ -32,7 +32,7 @@ use pocketmine\world\BlockTransaction;
 class RedMushroom extends Flowable{
 
 	public function ticksRandomly() : bool{
-		return true;
+		return false;
 	}
 
 	public function onNearbyBlockChange() : void{

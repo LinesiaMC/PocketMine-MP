@@ -96,7 +96,7 @@ class NetherVines extends Flowable implements Ageable{
 	}
 
 	public function ticksRandomly() : bool{
-		return $this->age < self::MAX_AGE;
+		return false;
 	}
 
 	public function onRandomTick() : void{

@@ -112,7 +112,7 @@ class Leaves extends Transparent{
 	}
 
 	public function ticksRandomly() : bool{
-		return !$this->noDecay && $this->checkDecay;
+		return false;
 	}
 
 	public function onRandomTick() : void{

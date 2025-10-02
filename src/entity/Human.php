@@ -67,6 +67,7 @@ use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use pocketmine\player\Player;
+use pocketmine\Server;
 use pocketmine\world\sound\TotemUseSound;
 use pocketmine\world\World;
 use Ramsey\Uuid\Uuid;
@@ -348,25 +349,14 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 		$this->hungerManager->setSaturation($nbt->getFloat(self::TAG_FOOD_SATURATION_LEVEL, $this->hungerManager->getSaturation()));
 		$this->hungerManager->setFoodTickTimer($nbt->getInt(self::TAG_FOOD_TICK_TIMER, $this->hungerManager->getFoodTickTimer()));
 
-		$this->xpManager->setXpAndProgressNoEvent(
-			$nbt->getInt(self::TAG_XP_LEVEL, 0),
-			$nbt->getFloat(self::TAG_XP_PROGRESS, 0.0));
-		$this->xpManager->setLifetimeTotalXp($nbt->getInt(self::TAG_LIFETIME_XP_TOTAL, 0));
+		$this->xpManager->setXpAndProgressNoEvent(0,0.0);
+		$this->xpManager->setLifetimeTotalXp(0);
 
 		if(($xpSeedTag = $nbt->getTag(self::TAG_XP_SEED)) instanceof IntTag){
 			$this->xpSeed = $xpSeedTag->getValue();
 		}else{
 			$this->xpSeed = EnchantingHelper::generateSeed();
 		}
-	}
-
-	protected function entityBaseTick(int $tickDiff = 1) : bool{
-		$hasUpdate = parent::entityBaseTick($tickDiff);
-
-		$this->hungerManager->tick($tickDiff);
-		$this->xpManager->tick($tickDiff);
-
-		return $hasUpdate;
 	}
 
 	public function getName() : string{
@@ -421,6 +411,10 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 
 	public function saveNBT() : CompoundTag{
 		$nbt = parent::saveNBT();
+
+		if(!Server::getInstance()->shouldSavePlayerData()){
+			return $nbt;
+		}
 
 		$nbt->setInt(self::TAG_FOOD_LEVEL, (int) $this->hungerManager->getFood());
 		$nbt->setFloat(self::TAG_FOOD_EXHAUSTION_LEVEL, $this->hungerManager->getExhaustion());

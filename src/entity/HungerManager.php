@@ -38,7 +38,7 @@ class HungerManager{
 
 	private int $foodTickTimer = 0;
 
-	private bool $enabled = true;
+	private bool $enabled = false;
 
 	public function __construct(
 		private Human $entity

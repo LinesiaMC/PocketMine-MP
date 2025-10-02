@@ -1155,53 +1155,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 		$this->getNetworkSession()->syncPlayerSpawnPoint($this->getSpawn());
 	}
 
-	public function isSleeping() : bool{
-		return $this->sleeping !== null;
-	}
-
-	public function sleepOn(Vector3 $pos) : bool{
-		$pos = $pos->floor();
-		$b = $this->getWorld()->getBlock($pos);
-
-		$ev = new PlayerBedEnterEvent($this, $b);
-		$ev->call();
-		if($ev->isCancelled()){
-			return false;
-		}
-
-		if($b instanceof Bed){
-			$b->setOccupied();
-			$this->getWorld()->setBlock($pos, $b);
-		}
-
-		$this->sleeping = $pos;
-		$this->networkPropertiesDirty = true;
-
-		$this->setSpawn($pos);
-
-		$this->getWorld()->setSleepTicks(60);
-
-		return true;
-	}
-
-	public function stopSleep() : void{
-		if($this->sleeping instanceof Vector3){
-			$b = $this->getWorld()->getBlock($this->sleeping);
-			if($b instanceof Bed){
-				$b->setOccupied(false);
-				$this->getWorld()->setBlock($this->sleeping, $b);
-			}
-			(new PlayerBedLeaveEvent($this, $b))->call();
-
-			$this->sleeping = null;
-			$this->networkPropertiesDirty = true;
-
-			$this->getWorld()->setSleepTicks(0);
-
-			$this->getNetworkSession()->sendDataPacket(AnimatePacket::create($this->getId(), AnimatePacket::ACTION_STOP_SLEEP));
-		}
-	}
-
 	public function getGamemode() : GameMode{
 		return $this->gamemode;
 	}
@@ -1210,7 +1163,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 		$this->gamemode = $gameMode;
 
 		$this->allowFlight = $this->gamemode === GameMode::CREATIVE;
-		$this->hungerManager->setEnabled($this->isSurvival());
+		$this->hungerManager->setEnabled(false);
 
 		if($this->isSpectator()){
 			$this->setFlying(true);
@@ -1441,13 +1394,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 
 			$horizontalDistanceTravelled = sqrt((($from->x - $to->x) ** 2) + (($from->z - $to->z) ** 2));
 			if($horizontalDistanceTravelled > 0){
-				//TODO: check for swimming
-				if($this->isSprinting()){
-					$this->hungerManager->exhaust(0.01 * $horizontalDistanceTravelled, PlayerExhaustEvent::CAUSE_SPRINTING);
-				}else{
-					$this->hungerManager->exhaust(0.0, PlayerExhaustEvent::CAUSE_WALKING);
-				}
-
 				if($this->nextChunkOrderRun > 20){
 					$this->nextChunkOrderRun = 20;
 				}
@@ -2435,7 +2381,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 
 		$this->spawned = false;
 
-		$this->stopSleep();
 		$this->blockBreakHandler = null;
 		$this->despawnFromAll();
 
@@ -2564,11 +2509,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 			$clearInventory($this->offHandInventory);
 		}
 
-		if(!$ev->getKeepXp()){
-			$this->getWorld()->dropExperience($this->location, $ev->getXpDropAmount());
-			$this->xpManager->setXpAndProgress(0, 0.0);
-		}
-
 		if($ev->getDeathMessage() !== ""){
 			$this->server->broadcastMessage($ev->getDeathMessage());
 		}
@@ -2655,12 +2595,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 		);
 	}
 
-	protected function applyPostDamageEffects(EntityDamageEvent $source) : void{
-		parent::applyPostDamageEffects($source);
-
-		$this->hungerManager->exhaust(0.1, PlayerExhaustEvent::CAUSE_DAMAGE);
-	}
-
 	public function attack(EntityDamageEvent $source) : void{
 		if(!$this->isAlive()){
 			return;
@@ -2735,7 +2669,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 		if(parent::teleport($pos, $yaw, $pitch)){
 
 			$this->removeCurrentWindow();
-			$this->stopSleep();
 
 			$this->sendPosition($this->location, $this->location->yaw, $this->location->pitch, MovePlayerPacket::MODE_TELEPORT);
 			$this->broadcastMovement(true);

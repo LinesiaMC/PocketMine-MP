@@ -55,7 +55,7 @@ class RedstoneOre extends Opaque implements Lightable{
 	}
 
 	public function ticksRandomly() : bool{
-		return $this->lit;
+		return false;
 	}
 
 	public function onRandomTick() : void{

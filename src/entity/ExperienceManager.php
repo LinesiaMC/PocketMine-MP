@@ -43,7 +43,7 @@ class ExperienceManager{
 
 	private int $totalXp = 0;
 
-	private bool $canAttractXpOrbs = true;
+	private bool $canAttractXpOrbs = false;
 
 	private int $xpCooldown = 0;
 

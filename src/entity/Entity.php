@@ -756,7 +756,7 @@ abstract class Entity{
 	 * Called to deal damage to entities when they are on fire.
 	 */
 	protected function dealFireDamage() : void{
-		$ev = new EntityDamageEvent($this, EntityDamageEvent::CAUSE_FIRE_TICK, 1);
+		$ev = new EntityDamageEvent($this, EntityDamageEvent::CAUSE_FIRE_TICK, 4);
 		$this->attack($ev);
 	}
 
@@ -1009,7 +1009,9 @@ abstract class Entity{
 
 		$this->timings->startTiming();
 
-		if($this->hasMovementUpdate()){
+		$needMove = $this->hasMovementUpdate();
+
+		if($needMove){
 			$this->tryChangeMovement();
 
 			$this->motion = $this->motion->withComponents(
@@ -1033,7 +1035,7 @@ abstract class Entity{
 
 		$this->timings->stopTiming();
 
-		return ($hasUpdate || $this->hasMovementUpdate());
+		return ($hasUpdate || $needMove);
 	}
 
 	final public function scheduleUpdate() : void{

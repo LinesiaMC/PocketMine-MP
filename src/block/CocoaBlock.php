@@ -93,7 +93,7 @@ class CocoaBlock extends Flowable implements Ageable, HorizontalFacing{
 	}
 
 	public function ticksRandomly() : bool{
-		return $this->age < self::MAX_AGE;
+		return false;
 	}
 
 	public function onRandomTick() : void{

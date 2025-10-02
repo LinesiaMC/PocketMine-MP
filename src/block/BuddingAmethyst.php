@@ -34,7 +34,7 @@ final class BuddingAmethyst extends Opaque{
 	use AmethystTrait;
 
 	public function ticksRandomly() : bool{
-		return true;
+		return false;
 	}
 
 	public function onRandomTick() : void{

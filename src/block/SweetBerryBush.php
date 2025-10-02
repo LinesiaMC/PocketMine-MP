@@ -105,7 +105,7 @@ class SweetBerryBush extends Flowable implements Ageable{
 	}
 
 	public function ticksRandomly() : bool{
-		return $this->age < self::STAGE_MATURE;
+		return false;
 	}
 
 	public function onRandomTick() : void{

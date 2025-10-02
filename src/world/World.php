@@ -276,7 +276,7 @@ class World implements ChunkManager{
 	private array $unloadQueue = [];
 
 	private int $time;
-	public bool $stopTime = false;
+	public bool $stopTime = true;
 
 	private float $sunAnglePercentage = 0.0;
 	private int $skyLightReduction = 0;
@@ -940,16 +940,7 @@ class World implements ChunkManager{
 		$this->sunAnglePercentage = $this->computeSunAnglePercentage(); //Sun angle depends on the current time
 		$this->skyLightReduction = $this->computeSkyLightReduction(); //Sky light reduction depends on the sun angle
 
-		if(++$this->sendTimeTicker === 200){
-			$this->sendTime();
-			$this->sendTimeTicker = 0;
-		}
-
 		$this->unloadChunks();
-		if(++$this->providerGarbageCollectionTicker >= 6000){
-			$this->provider->doGarbageCollection();
-			$this->providerGarbageCollectionTicker = 0;
-		}
 
 		$this->timings->scheduledBlockUpdates->startTiming();
 		//Delayed updates
@@ -1038,10 +1029,6 @@ class World implements ChunkManager{
 
 		}
 
-		if($this->sleepTicks > 0 && --$this->sleepTicks <= 0){
-			$this->checkSleep();
-		}
-
 		foreach($this->packetBuffersByChunk as $index => $entries){
 			World::getXZ($index, $chunkX, $chunkZ);
 			$chunkPlayers = $this->getChunkPlayers($chunkX, $chunkZ);
@@ -1051,36 +1038,6 @@ class World implements ChunkManager{
 		}
 
 		$this->packetBuffersByChunk = [];
-	}
-
-	public function checkSleep() : void{
-		if(count($this->players) === 0){
-			return;
-		}
-
-		$resetTime = true;
-		foreach($this->getPlayers() as $p){
-			if(!$p->isSleeping()){
-				$resetTime = false;
-				break;
-			}
-		}
-
-		if($resetTime){
-			$time = $this->getTimeOfDay();
-
-			if($time >= World::TIME_NIGHT && $time < World::TIME_SUNRISE){
-				$this->setTime($this->getTime() + World::TIME_FULL - $time);
-
-				foreach($this->getPlayers() as $p){
-					$p->stopSleep();
-				}
-			}
-		}
-	}
-
-	public function setSleepTicks(int $ticks) : void{
-		$this->sleepTicks = $ticks;
 	}
 
 	/**
@@ -1165,7 +1122,6 @@ class World implements ChunkManager{
 	}
 
 	private function trimBlockCache() : void{
-		$before = $this->blockCacheSize;
 		//Since PHP maintains key order, earliest in foreach should be the oldest entries
 		//Older entries are less likely to be hot, so destroying these should usually have the lowest impact on performance
 		foreach($this->blockCache as $chunkHash => $blocks){
@@ -2113,14 +2069,14 @@ class World implements ChunkManager{
 	public function dropExperience(Vector3 $pos, int $amount) : array{
 		$orbs = [];
 
-		foreach(ExperienceOrb::splitIntoOrbSizes($amount) as $split){
+		/*foreach(ExperienceOrb::splitIntoOrbSizes($amount) as $split){
 			$orb = new ExperienceOrb(Location::fromObject($pos, $this, Utils::getRandomFloat() * 360, 0), $split);
 
 			$orb->setMotion(new Vector3((Utils::getRandomFloat() * 0.2 - 0.1) * 2, Utils::getRandomFloat() * 0.4, (Utils::getRandomFloat() * 0.2 - 0.1) * 2));
 			$orb->spawnToAll();
 
 			$orbs[] = $orb;
-		}
+		}*/
 
 		return $orbs;
 	}
@@ -2188,7 +2144,6 @@ class World implements ChunkManager{
 			}
 
 			$drops = $ev->getDrops();
-			$xpDrop = $ev->getXpDropAmount();
 
 		}elseif(!$target->getBreakInfo()->isBreakable()){
 			return false;
@@ -2207,10 +2162,6 @@ class World implements ChunkManager{
 					$this->dropItem($dropPos, $drop);
 				}
 			}
-		}
-
-		if($xpDrop > 0){
-			$this->dropExperience($vector->add(0.5, 0.5, 0.5), $xpDrop);
 		}
 
 		return true;
@@ -2817,7 +2768,6 @@ class World implements ChunkManager{
 
 		if($entity instanceof Player){
 			unset($this->players[$entity->getId()]);
-			$this->checkSleep();
 		}
 
 		unset($this->entities[$entity->getId()]);

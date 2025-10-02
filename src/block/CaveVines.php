@@ -131,7 +131,7 @@ class CaveVines extends Flowable implements Ageable{
 	}
 
 	public function ticksRandomly() : bool{
-		return true;
+		return false;
 	}
 
 	protected function recalculateCollisionBoxes() : array{

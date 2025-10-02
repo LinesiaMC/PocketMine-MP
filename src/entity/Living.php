@@ -528,35 +528,6 @@ abstract class Living extends Entity{
 		if($source->canBeReducedByArmor()){
 			$this->damageArmor($source->getBaseDamage());
 		}
-
-		if($source instanceof EntityDamageByEntityEvent && ($attacker = $source->getDamager()) !== null){
-			$damage = 0;
-			foreach($this->armorInventory->getContents() as $k => $item){
-				if($item instanceof Armor && ($thornsLevel = $item->getEnchantmentLevel(VanillaEnchantments::THORNS())) > 0){
-					if(mt_rand(0, 99) < $thornsLevel * 15){
-						$this->damageItem($item, 3);
-						$damage += ($thornsLevel > 10 ? $thornsLevel - 10 : 1 + mt_rand(0, 3));
-					}else{
-						$this->damageItem($item, 1); //thorns causes an extra +1 durability loss even if it didn't activate
-					}
-
-					$this->armorInventory->setItem($k, $item);
-				}
-			}
-
-			if($damage > 0){
-				$attacker->attack(new EntityDamageByEntityEvent($this, $attacker, EntityDamageEvent::CAUSE_MAGIC, $damage));
-			}
-
-			if($source->getModifier(EntityDamageEvent::MODIFIER_ARMOR_HELMET) < 0){
-				$helmet = $this->armorInventory->getHelmet();
-				if($helmet instanceof Armor){
-					$finalDamage = $source->getFinalDamage();
-					$this->damageItem($helmet, (int) round($finalDamage * 4 + Utils::getRandomFloat() * $finalDamage * 2));
-					$this->armorInventory->setHelmet($helmet);
-				}
-			}
-		}
 	}
 
 	/**
@@ -651,7 +622,12 @@ abstract class Living extends Entity{
 				}
 			}
 
-			if($this->isAlive()){
+			if($this->isAlive() && (
+					$source->getCause() !== EntityDamageEvent::CAUSE_FIRE
+					|| $source->getCause() !== EntityDamageEvent::CAUSE_FIRE_TICK
+					|| $source->getCause() !== EntityDamageEvent::CAUSE_LAVA
+				))
+			{
 				$this->doHitAnimation();
 			}
 		}
@@ -697,7 +673,7 @@ abstract class Living extends Entity{
 		}
 
 		//TODO: check death conditions (must have been damaged by player < 5 seconds from death)
-		$this->getWorld()->dropExperience($this->location, $ev->getXpDropAmount());
+		//$this->getWorld()->dropExperience($this->location, $ev->getXpDropAmount());
 
 		$this->startDeathAnimation();
 	}
