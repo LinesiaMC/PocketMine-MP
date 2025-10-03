@@ -290,10 +290,10 @@ final class CraftingManagerFromDataHelper{
 			if($input === null){
 				continue;
 			}
-			$result->getFurnaceRecipeManager($furnaceType)->register(new FurnaceRecipe(
+			/*$result->getFurnaceRecipeManager($furnaceType)->register(new FurnaceRecipe(
 				$output,
 				$input
-			));
+			));*/
 		}
 
 		foreach(self::loadJsonArrayOfObjectsFile(Path::join($directoryPath, 'potion_type.json'), PotionTypeRecipeData::class) as $recipe){
