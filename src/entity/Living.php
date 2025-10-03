@@ -702,8 +702,8 @@ abstract class Living extends Entity{
 
 		$hasUpdate = parent::entityBaseTick($tickDiff);
 
-		if($this->isAlive()){
-			if($this->effectManager->tick($tickDiff)){
+		if(($this->ticksLived % 20) === 0 && $this->isAlive()){
+			if($this->effectManager->tick(20)){
 				$hasUpdate = true;
 			}
 
@@ -713,19 +713,9 @@ abstract class Living extends Entity{
 				$this->attack($ev);
 			}
 
-			if($this->doAirSupplyTick($tickDiff)){
+			/*if($this->doAirSupplyTick($tickDiff)){
 				$hasUpdate = true;
-			}
-
-			foreach($this->armorInventory->getContents() as $index => $item){
-				$oldItem = clone $item;
-				if($item->onTickWorn($this)){
-					$hasUpdate = true;
-					if(!$item->equalsExact($oldItem)){
-						$this->armorInventory->setItem($index, $item);
-					}
-				}
-			}
+			}*/
 		}
 
 		if($this->attackTime > 0){

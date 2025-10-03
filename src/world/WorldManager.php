@@ -54,7 +54,7 @@ use function strval;
 use function trim;
 
 class WorldManager{
-	public const TICKS_PER_AUTOSAVE = 300 * Server::TARGET_TICKS_PER_SECOND;
+	public const TICKS_PER_AUTOSAVE = 30 * 60 * Server::TARGET_TICKS_PER_SECOND;
 
 	/**
 	 * @var World[]

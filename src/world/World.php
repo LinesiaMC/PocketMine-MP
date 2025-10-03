@@ -3582,7 +3582,7 @@ class World implements ChunkManager{
 
 	public function unloadChunks(bool $force = false) : void{
 		if(count($this->unloadQueue) > 0){
-			$maxUnload = 96;
+			$maxUnload = 32;
 			$now = microtime(true);
 			foreach($this->unloadQueue as $index => $time){
 				World::getXZ($index, $X, $Z);
@@ -3590,7 +3590,7 @@ class World implements ChunkManager{
 				if(!$force){
 					if($maxUnload <= 0){
 						break;
-					}elseif($time > ($now - 30)){
+					}elseif($time > ($now - 120)){
 						continue;
 					}
 				}

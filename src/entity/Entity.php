@@ -661,14 +661,15 @@ abstract class Entity{
 		}
 		$this->checkBlockIntersectionsNextTick = true;
 
-		if($this->location->y <= World::Y_MIN - 16 && $this->isAlive()){
-			$ev = new EntityDamageEvent($this, EntityDamageEvent::CAUSE_VOID, 10);
-			$this->attack($ev);
-			$hasUpdate = true;
-		}
+		if(($this->ticksLived % 20) === 0 && $this->isAlive()) {
+			if ($this->location->y <= World::Y_MIN - 16) {
+				$this->teleport($this->getWorld()->getSpawnLocation());
+				$hasUpdate = true;
+			}
 
-		if($this->isOnFire() && $this->doOnFireTick($tickDiff)){
-			$hasUpdate = true;
+			if ($this->isOnFire() && $this->doOnFireTick(20)) {
+				$hasUpdate = true;
+			}
 		}
 
 		if($this->noDamageTicks > 0){
