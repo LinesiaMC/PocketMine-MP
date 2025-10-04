@@ -232,10 +232,10 @@ class LoginPacketHandler extends PacketHandler{
 			throw new InvalidPacketException("SelfSignedId equal DeviceId");
 		}
 
-		if(empty(trim($clientData->PlayFabId))) {
+		/*if(empty(trim($clientData->PlayFabId))) {
 			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid PlayFabId");
 			throw new InvalidPacketException("Invalid PlayFabId");
-		}
+		}*/
 
 		if(!str_contains($clientData->SkinColor, "#")) {
 			$this->server->getLogger()->alert("LOGIN LOG : $username SkinColor does not contains #");
