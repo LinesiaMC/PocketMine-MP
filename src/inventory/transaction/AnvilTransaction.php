@@ -55,11 +55,6 @@ class AnvilTransaction extends InventoryTransaction{
 		if($xpSpent !== $expectedXpCost){
 			throw new TransactionValidationException("Expected the amount of xp spent to be $expectedXpCost, but received $xpSpent");
 		}
-
-		$xpLevel = $this->source->getXpManager()->getXpLevel();
-		if($xpLevel < $expectedXpCost){
-			throw new TransactionValidationException("Player's XP level $xpLevel is less than the required XP level $expectedXpCost");
-		}
 	}
 
 	private function validateInputs(Item $base, Item $material, Item $expectedOutput) : ?int{

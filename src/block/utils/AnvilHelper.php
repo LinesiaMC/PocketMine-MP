@@ -28,7 +28,7 @@ use pocketmine\item\Item;
 use pocketmine\Server;
 
 final class AnvilHelper{
-	private const COST_LIMIT = 39;
+	private const COST_LIMIT = 10;
 
 	/**
 	 * Attempts to calculate the result of an anvil operation.
@@ -47,10 +47,10 @@ final class AnvilHelper{
 			$resultItem = $result->getOutput();
 			$xpCost = $result->getXpCost();
 			if(($customName === null || $customName === "") && $resultItem->hasCustomName()){
-				$xpCost++;
+				$xpCost += 5;
 				$resultItem->clearCustomName();
-			}elseif($customName !== null && $resultItem->getCustomName() !== $customName){
-				$xpCost++;
+			}elseif($customName !== null && $resultItem->getCustomName() !== $customName && ctype_alnum($customName)){
+				$xpCost += 5;
 				$resultItem->setCustomName($customName);
 			}
 

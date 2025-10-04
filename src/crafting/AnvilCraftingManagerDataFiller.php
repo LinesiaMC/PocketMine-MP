@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\crafting;
 
+use linesia\wyze\items\ExtraItems;
 use pocketmine\item\Durable;
 use pocketmine\item\ToolTier;
 use pocketmine\item\VanillaArmorMaterials;
@@ -31,38 +32,31 @@ use pocketmine\world\format\io\GlobalItemDataHandlers;
 
 final class AnvilCraftingManagerDataFiller{
 	public static function fillData(CraftingManager $manager) : CraftingManager{
-		foreach([
-			[
-				VanillaItems::DIAMOND(),
-				[VanillaArmorMaterials::DIAMOND(), ToolTier::DIAMOND]
-			], [
-				VanillaItems::GOLD_INGOT(),
-				[VanillaArmorMaterials::GOLD(), ToolTier::GOLD]
-			], [
-				VanillaItems::IRON_INGOT(),
-				[VanillaArmorMaterials::IRON(), ToolTier::IRON]
-			], [
-				VanillaItems::NETHERITE_INGOT(),
-				[VanillaArmorMaterials::NETHERITE(), ToolTier::NETHERITE]
-			], [
-				VanillaItems::SCUTE(),
-				[VanillaArmorMaterials::TURTLE(), null]
-			], [
-				VanillaItems::LEATHER(),
-				[VanillaArmorMaterials::LEATHER(), null]
-			]
-		] as [$item, [$armorMaterial, $toolTier]]){
-			$manager->registerAnvilRecipe(new MaterialRepairRecipe(
-				new ArmorRecipeIngredient($armorMaterial),
-				new ExactRecipeIngredient($item)
-			));
-			if($toolTier !== null){
-				$manager->registerAnvilRecipe(new MaterialRepairRecipe(
-					new TieredToolRecipeIngredient($toolTier),
-					new ExactRecipeIngredient($item)
-				));
-			}
-		}
+		$manager->registerAnvilRecipe(new FixedIngotRepairRecipe(
+			new ArmorRecipeIngredient(VanillaArmorMaterials::DIAMOND()),
+			new ExactRecipeIngredient(VanillaItems::DIAMOND())
+		));
+
+		$manager->registerAnvilRecipe(new FixedIngotRepairRecipe(
+			new ExactRecipeIngredient(VanillaItems::DIAMOND()),
+			new ExactRecipeIngredient(VanillaItems::DIAMOND_AXE())
+		));
+		$manager->registerAnvilRecipe(new FixedIngotRepairRecipe(
+			new ExactRecipeIngredient(VanillaItems::DIAMOND()),
+			new ExactRecipeIngredient(VanillaItems::DIAMOND_HOE())
+		));
+		$manager->registerAnvilRecipe(new FixedIngotRepairRecipe(
+			new ExactRecipeIngredient(VanillaItems::DIAMOND()),
+			new ExactRecipeIngredient(VanillaItems::DIAMOND_PICKAXE())
+		));
+		$manager->registerAnvilRecipe(new FixedIngotRepairRecipe(
+			new ExactRecipeIngredient(VanillaItems::DIAMOND()),
+			new ExactRecipeIngredient(VanillaItems::DIAMOND_SHOVEL())
+		));
+		$manager->registerAnvilRecipe(new FixedIngotRepairRecipe(
+			new ExactRecipeIngredient(VanillaItems::DIAMOND()),
+			new ExactRecipeIngredient(VanillaItems::DIAMOND_SWORD())
+		));
 
 		foreach(VanillaItems::getAll() as $item){
 			if($item instanceof Durable){

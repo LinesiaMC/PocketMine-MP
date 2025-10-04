@@ -271,7 +271,7 @@ final class CraftingManagerFromDataHelper{
 				$outputs
 			));
 		}
-		foreach(self::loadJsonArrayOfObjectsFile(Path::join($directoryPath, 'smelting.json'), FurnaceRecipeData::class) as $recipe){
+		/*foreach(self::loadJsonArrayOfObjectsFile(Path::join($directoryPath, 'smelting.json'), FurnaceRecipeData::class) as $recipe){
 			$furnaceType = match ($recipe->block) {
 				"furnace" => FurnaceType::FURNACE,
 				"blast_furnace" => FurnaceType::BLAST_FURNACE,
@@ -291,11 +291,11 @@ final class CraftingManagerFromDataHelper{
 			if($input === null){
 				continue;
 			}
-			/*$result->getFurnaceRecipeManager($furnaceType)->register(new FurnaceRecipe(
+			$result->getFurnaceRecipeManager($furnaceType)->register(new FurnaceRecipe(
 				$output,
 				$input
-			));*/
-		}
+			));
+		}*/
 
 		foreach(self::loadJsonArrayOfObjectsFile(Path::join($directoryPath, 'potion_type.json'), PotionTypeRecipeData::class) as $recipe){
 			$input = self::deserializeIngredient($recipe->input);
