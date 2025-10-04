@@ -185,6 +185,7 @@ final class CraftingManagerFromDataHelper{
 
 	/**
 	 * @param mixed[] $data
+	 *
 	 * @return object[]
 	 *
 	 * @phpstan-template TRecipeData of object
@@ -210,7 +211,7 @@ final class CraftingManagerFromDataHelper{
 		$result = new CraftingManager();
 
 		foreach(self::loadJsonArrayOfObjectsFile(Path::join($directoryPath, 'shapeless_crafting.json'), ShapelessRecipeData::class) as $recipe){
-			$recipeType = match($recipe->block){
+			$recipeType = match ($recipe->block) {
 				"crafting_table" => ShapelessRecipeType::CRAFTING,
 				"stonecutter" => ShapelessRecipeType::STONECUTTER,
 				"smithing_table" => ShapelessRecipeType::SMITHING,
@@ -271,7 +272,7 @@ final class CraftingManagerFromDataHelper{
 			));
 		}
 		foreach(self::loadJsonArrayOfObjectsFile(Path::join($directoryPath, 'smelting.json'), FurnaceRecipeData::class) as $recipe){
-			$furnaceType = match ($recipe->block){
+			$furnaceType = match ($recipe->block) {
 				"furnace" => FurnaceType::FURNACE,
 				"blast_furnace" => FurnaceType::BLAST_FURNACE,
 				"smoker" => FurnaceType::SMOKER,
@@ -332,6 +333,8 @@ final class CraftingManagerFromDataHelper{
 				$outputId
 			));
 		}
+
+		$result = AnvilCraftingManagerDataFiller::fillData($result);
 
 		//TODO: smithing
 
