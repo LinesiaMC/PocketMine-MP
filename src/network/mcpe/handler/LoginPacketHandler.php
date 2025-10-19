@@ -393,7 +393,8 @@ class LoginPacketHandler extends PacketHandler{
 		if(($c = count($clientData->PieceTintColors)) >= 25) {
 			throw new InvalidPacketException("Invalid PieceTintColors ({$c})");
 		}
-		if(($c = $clientData->ArmSize) == "") {
+		$armLower = strtolower((string)($clientData->ArmSize ?? ''));
+		if(($c = $armLower) == "") {
 			throw new InvalidPacketException("Invalid ArmSize ({$c})");
 		}
 	}
