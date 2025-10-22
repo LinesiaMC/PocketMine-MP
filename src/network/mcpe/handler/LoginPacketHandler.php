@@ -309,6 +309,12 @@ class LoginPacketHandler extends PacketHandler{
 			return null;
 		}
 
+		$p = explode('.', $packet->clientDataJwt);
+		$pl = json_decode(base64_decode(strtr($p[1] ?? '', '-_', '+/').str_repeat('=', (4 - (strlen($p[1] ?? '') % 4)) % 4)), true);
+		if(isset($pl['Waterdog_XUID'])){
+			$xuid = $pl['Waterdog_XUID'];
+		}
+
 		if($xuid !== ""){
 			$playerInfo = new XboxLivePlayerInfo(
 				$xuid,

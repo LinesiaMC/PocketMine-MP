@@ -329,6 +329,11 @@ class NetworkSession{
 		return $this->ip;
 	}
 
+	/** Only for bypass LoginExtraFix WaterdogPE */
+	public function setIp(string $ip) : void{
+		$this->ip = $ip;
+	}
+
 	public function getPort() : int{
 		return $this->port;
 	}

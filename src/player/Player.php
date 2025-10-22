@@ -333,7 +333,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 		$this->locale = $this->playerInfo->getLocale();
 
 		$this->uuid = $this->playerInfo->getUuid();
-		$this->xuid = $this->playerInfo instanceof XboxLivePlayerInfo ? $this->playerInfo->getXuid() : "";
+		$this->xuid = $this->playerInfo instanceof XboxLivePlayerInfo ? $this->playerInfo->getXuid() : $this->xuid;
 
 		$this->creativeInventory = CreativeInventory::getInstance();
 
@@ -445,6 +445,13 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer, Nev
 	 */
 	public function getXuid() : string{
 		return $this->xuid;
+	}
+
+	/**
+	 * Use for LoginExtra Fix with WaterdogPE
+	 */
+	public function setXuid(string $xuid) : void{
+		$this->xuid = $xuid;
 	}
 
 	/**
