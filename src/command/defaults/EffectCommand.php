@@ -29,10 +29,10 @@ use pocketmine\entity\effect\EffectInstance;
 use pocketmine\entity\effect\StringToEffectParser;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
-use pocketmine\network\mcpe\protocol\types\command\CommandEnum;
-use pocketmine\network\mcpe\protocol\types\command\CommandEnumConstraint;
+use pocketmine\network\mcpe\protocol\types\command\CommandHardEnum;
 use pocketmine\network\mcpe\protocol\types\command\CommandOverload;
 use pocketmine\network\mcpe\protocol\types\command\CommandParameter;
+use pocketmine\network\mcpe\protocol\types\command\raw\CommandEnumConstraintRawData;
 use pocketmine\permission\DefaultPermissionNames;
 use pocketmine\utils\Limits;
 use pocketmine\utils\TextFormat;
@@ -54,16 +54,16 @@ class EffectCommand extends VanillaCommand{
 	}
 
 	/**
-	 * @param CommandEnum[]           $hardcodedEnums
-	 * @param CommandEnum[]           $softEnums
-	 * @param CommandEnumConstraint[] $enumConstraints
+	 * @param CommandHardEnum[]           $hardcodedEnums
+	 * @param CommandHardEnum[]           $softEnums
+	 * @param CommandEnumConstraintRawData[] $enumConstraints
 	 * @return CommandOverload[]
 	 */
 	public function buildOverloads(array &$hardcodedEnums, array &$softEnums, array &$enumConstraints) : array{
-		$effectEnum = new CommandEnum('Effect', StringToEffectParser::getInstance()->getKnownAliases(), false);
-		$boolean = new CommandEnum('Boolean', ["true", "false"], false);
+		$effectEnum = new CommandHardEnum('Effect', StringToEffectParser::getInstance()->getKnownAliases(), false);
+		$boolean = new CommandHardEnum('Boolean', ["true", "false"], false);
 
-		$clear = new CommandEnum('clear', ["clear"], false);
+		$clear = new CommandHardEnum('clear', ["clear"], false);
 
 		return [
 			new CommandOverload(chaining: false, parameters: [

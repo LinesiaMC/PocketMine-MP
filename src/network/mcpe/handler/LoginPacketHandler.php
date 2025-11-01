@@ -203,33 +203,33 @@ class LoginPacketHandler extends PacketHandler{
 		} else {
 			if(!UUIDValidator::isValidUUID($deviceId)) {
 				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId ($deviceId)");
-				throw new InvalidPacketException("Invalid DeviceId ($deviceId)");
+				//throw new InvalidPacketException("Invalid DeviceId ($deviceId)");
 			}
 
 			$deviceIdVersion = UUIDValidator::getUUIDVersion($deviceId);
 			if(TitleId::equal(TitleId::NINTENDO, $deviceOs)) {
 				if($deviceIdVersion != 5) {
 					$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId version (SWITCH)");
-					throw new InvalidPacketException("Invalid DeviceId version (SWITCH)");
+					//throw new InvalidPacketException("Invalid DeviceId version (SWITCH)");
 				}
 			} else if($deviceIdVersion != 3) {
 				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId version (" . $deviceIdVersion . ")");
-				throw new InvalidPacketException("Invalid DeviceId version (" . $deviceIdVersion . ")");
+				//throw new InvalidPacketException("Invalid DeviceId version (" . $deviceIdVersion . ")");
 			}
 		}
 
 		$selfSignedId = $clientData->SelfSignedId;
 		if(!UUIDValidator::isValidUUID($selfSignedId)) {
 			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid SelfSignedId");
-			throw new InvalidPacketException("Invalid SelfSignedId");
+			//throw new InvalidPacketException("Invalid SelfSignedId");
 		}
 		if(UUIDValidator::getUUIDVersion($selfSignedId) != 3) {
 			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid SelfSignedId version (" . $selfSignedId . ")");
-			throw new InvalidPacketException("Invalid SelfSignedId version (" . $selfSignedId . ")");
+			//throw new InvalidPacketException("Invalid SelfSignedId version (" . $selfSignedId . ")");
 		}
 		if($deviceId === $selfSignedId) {
 			$this->server->getLogger()->alert("LOGIN LOG : $username SelfSignedId equal DeviceId");
-			throw new InvalidPacketException("SelfSignedId equal DeviceId");
+			//throw new InvalidPacketException("SelfSignedId equal DeviceId");
 		}
 
 		/*if(empty(trim($clientData->PlayFabId))) {

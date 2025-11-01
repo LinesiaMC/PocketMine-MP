@@ -29,8 +29,8 @@ use pocketmine\command\utils\InvalidCommandSyntaxException;
 use pocketmine\entity\Location;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
-use pocketmine\network\mcpe\protocol\types\command\CommandEnum;
-use pocketmine\network\mcpe\protocol\types\command\CommandEnumConstraint;
+use pocketmine\network\mcpe\protocol\types\command\CommandHardEnum;
+use pocketmine\network\mcpe\protocol\types\command\raw\CommandEnumConstraintRawData;
 use pocketmine\network\mcpe\protocol\types\command\CommandOverload;
 use pocketmine\network\mcpe\protocol\types\command\CommandParameter;
 use pocketmine\permission\DefaultPermissionNames;
@@ -58,9 +58,9 @@ class TeleportCommand extends VanillaCommand{
 	}
 
 	/**
-	 * @param CommandEnum[]           $hardcodedEnums
-	 * @param CommandEnum[]           $softEnums
-	 * @param CommandEnumConstraint[] $enumConstraints
+	 * @param CommandHardEnum[]           $hardcodedEnums
+	 * @param CommandHardEnum[]           $softEnums
+	 * @param CommandEnumConstraintRawData[] $enumConstraints
 	 * @return CommandOverload[]
 	 */
 	public function buildOverloads(array &$hardcodedEnums, array &$softEnums, array &$enumConstraints) : array{

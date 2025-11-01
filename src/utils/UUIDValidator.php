@@ -6,17 +6,34 @@ use Exception;
 use InvalidArgumentException;
 
 class UUIDValidator {
-    private static string $UUID_PATTERN = '/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/';
+	private const UUID_PATTERN =
+		'/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/';
 
+	// Base64 strict (multiple de 4 + padding)
+	private const BASE64_PATTERN =
+		'/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/';
 
-    /**
-     * @param string $uuid
-     * @return bool
-     */
-    public static function isValidUUID(string $uuid): bool
-    {
-        return preg_match(self::$UUID_PATTERN, $uuid) === 1;
-    }
+	/**
+	 * @param string $uuid
+	 * @return bool
+	 */
+	public static function isValidUuid(string $v): bool
+	{
+		return \preg_match(self::UUID_PATTERN, $v) === 1;
+	}
+
+	public static function isValidGdkDeviceId(string $v): bool
+	{
+		// la plupart de ceux qu’on voit font 44 chars (= 32 bytes en base64)
+		return \preg_match(self::BASE64_PATTERN, $v) === 1
+			&& \strlen($v) >= 28   // marge
+			&& \strlen($v) <= 128;
+	}
+
+	public static function isValidAny(string $v): bool
+	{
+		return self::isValidUuid($v) || self::isValidGdkDeviceId($v);
+	}
 
     /**
      * @param string $uuid
