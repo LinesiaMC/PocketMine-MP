@@ -39,6 +39,7 @@ use pocketmine\lang\Translatable;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\network\FilterNoisyPacketException;
 use pocketmine\network\mcpe\cache\ChunkCache;
 use pocketmine\network\mcpe\compression\CompressBatchPromise;
 use pocketmine\network\mcpe\compression\Compressor;
@@ -61,7 +62,6 @@ use pocketmine\network\mcpe\protocol\ChunkRadiusUpdatedPacket;
 use pocketmine\network\mcpe\protocol\ClientboundCloseFormPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
-use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
 use pocketmine\network\mcpe\protocol\ModalFormRequestPacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 use pocketmine\network\mcpe\protocol\NetworkChunkPublisherUpdatePacket;
@@ -73,6 +73,7 @@ use pocketmine\network\mcpe\protocol\PlayerListPacket;
 use pocketmine\network\mcpe\protocol\PlayerStartItemCooldownPacket;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pocketmine\network\mcpe\protocol\serializer\AvailableCommandsPacketAssembler;
 use pocketmine\network\mcpe\protocol\serializer\PacketBatch;
 use pocketmine\network\mcpe\protocol\ServerboundPacket;
 use pocketmine\network\mcpe\protocol\ServerToClientHandshakePacket;
@@ -119,6 +120,7 @@ use pocketmine\world\Position;
 use pocketmine\world\World;
 use pocketmine\YmlServerProperties;
 use function array_map;
+use function array_values;
 use function base64_encode;
 use function bin2hex;
 use function count;
@@ -144,6 +146,8 @@ class NetworkSession{
 
 	private const INCOMING_GAME_PACKETS_PER_TICK = 2;
 	private const INCOMING_GAME_PACKETS_BUFFER_TICKS = 100;
+
+	private const INCOMING_PACKET_BATCH_HARD_LIMIT = 300;
 
 	private PacketRateLimiter $packetBatchLimiter;
 	private PacketRateLimiter $gamePacketLimiter;
@@ -195,16 +199,8 @@ class NetworkSession{
 	 */
 	private ObjectSet $disposeHooks;
 
-	/**
-	 * @var string[]
-	 * @phpstan-var array<int, string>
-	 */
-	private array $repeatedPacketFilters = [];
-	/**
-	 * @var int[]
-	 * @phpstan-var array<int, int>
-	 */
-	private array $repeatedPacketFilterStats = [];
+	private string $noisyPacketBuffer = "";
+	private int $noisyPacketsDropped = 0;
 
 	public function __construct(
 		private Server $server,
@@ -232,8 +228,6 @@ class NetworkSession{
 			$this,
 			$this->onSessionStartSuccess(...)
 		));
-
-		//$this->addRepeatedPacketFilter(InventoryTransactionPacket::NETWORK_ID);
 
 		$this->manager->add($this);
 		$this->logger->info($this->server->getLanguage()->translate(KnownTranslationFactory::pocketmine_network_session_open()));
@@ -369,40 +363,16 @@ class NetworkSession{
 		}
 	}
 
-	public function addRepeatedPacketFilter(int $packetId) : void{
-		$this->repeatedPacketFilters[$packetId] = "";
-		$this->repeatedPacketFilterStats[$packetId] = 0;
-	}
-
-	public function removeRepeatedPacketFilter(int $packetId) : void{
-		unset($this->repeatedPacketFilters[$packetId]);
-		unset($this->repeatedPacketFilterStats[$packetId]);
-	}
-
-	/**
-	 * Returns the stats for repeated packet filters, indexed by packet ID.
-	 * The value is the number of times a packet was dropped due to being repeated.
-	 *
-	 * @return int[]
-	 * @phpstan-return array<int, int>
-	 */
-	public function getRepeatedPacketFilterStats() : array{
-		return $this->repeatedPacketFilterStats;
-	}
-
 	private function checkRepeatedPacketFilter(string $buffer) : bool{
-		//TODO: would be great if we didn't repeat reading the ID inside PacketPool
-		$dummy = 0;
-		$packetId = Binary::readUnsignedVarInt($buffer, $dummy);
-
-		if(isset($this->repeatedPacketFilters[$packetId])){
-			if($buffer === $this->repeatedPacketFilters[$packetId]){
-				$this->repeatedPacketFilterStats[$packetId]++;
-				return true;
-			}
-
-			$this->repeatedPacketFilters[$packetId] = $buffer;
+		if($buffer === $this->noisyPacketBuffer){
+			$this->noisyPacketsDropped++;
+			return true;
 		}
+		//stop filtering once we see a packet with a different buffer
+		//this won't be any good for interleaved spammy packets, but we haven't seen any of those so far, and this
+		//is the simplest and most conservative filter we can do
+		$this->noisyPacketBuffer = "";
+		$this->noisyPacketsDropped = 0;
 
 		return false;
 	}
@@ -457,13 +427,21 @@ class NetworkSession{
 				$decompressed = $payload;
 			}
 
+			$count = 0;
 			try{
 				$stream = new ByteBufferReader($decompressed);
 				foreach(PacketBatch::decodeRaw($stream) as $buffer){
+					if(++$count >= self::INCOMING_PACKET_BATCH_HARD_LIMIT){
+						//this should be well more than enough; under normal conditions the game packet rate limiter
+						//will kick in well before this. This is only here to make sure we can't get huge batches of
+						//noisy packets to bog down the server, since those aren't counted by the regular limiter.
+						throw new PacketHandlingException("Reached hard limit of " . self::INCOMING_PACKET_BATCH_HARD_LIMIT . " per batch packet");
+					}
+
 					// TODO : BYPASS ATTACK MOB SPAM
-					/*if($this->checkRepeatedPacketFilter($buffer)){
+					if($this->checkRepeatedPacketFilter($buffer)){
 						continue;
-					}*/
+					}
 
 					$this->gamePacketLimiter->decrement();
 					$packet = $this->packetPool->getPacket($buffer);
@@ -476,6 +454,8 @@ class NetworkSession{
 					}catch(PacketHandlingException $e){
 						$this->logger->debug($packet->getName() . ": " . base64_encode($buffer));
 						throw PacketHandlingException::wrap($e, "Error processing " . $packet->getName());
+					}catch(FilterNoisyPacketException){
+						$this->noisyPacketBuffer = $buffer;
 					}
 					if(!$this->isConnected()){
 						//handling this packet may have caused a disconnection
@@ -494,6 +474,7 @@ class NetworkSession{
 
 	/**
 	 * @throws PacketHandlingException
+	 * @throws FilterNoisyPacketException
 	 */
 	public function handleDataPacket(Packet $packet, string $buffer) : void{
 		if(!($packet instanceof ServerboundPacket)){
@@ -1173,7 +1154,7 @@ class NetworkSession{
 					//work around a client bug which makes the original name not show when aliases are used
 					$aliases[] = $lname;
 				}
-				$aliasObj = new CommandEnum(ucfirst($command->getLabel()) . "Aliases", $aliases);
+				$aliasObj = new CommandHardEnum(ucfirst($command->getLabel()) . "Aliases", $aliases);
 			}
 
 			$description = $command->getDescription();
@@ -1190,6 +1171,7 @@ class NetworkSession{
 			$commandData[$command->getLabel()] = $data;
 		}
 
+		//PMMP : $this->sendDataPacket(AvailableCommandsPacketAssembler::assemble(array_values($commandData), [], []));
 		$this->sendDataPacket(AvailableCommandsPacket::create($commandData, $hardcodedEnums, $softEnums, $enumConstraints));
 	}
 
