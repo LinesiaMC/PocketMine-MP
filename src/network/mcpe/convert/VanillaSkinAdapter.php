@@ -77,7 +77,6 @@ class VanillaSkinAdapter implements SkinAdapter{
 		try {
 			[$geometryName, $geometry] = $this->parseGeometry($data->getResourcePatch(), $data->getGeometryData());
 		} catch(InvalidSkinException $e) {
-			var_dump($e->getMessage());
 			return $this->default;
 		}
 

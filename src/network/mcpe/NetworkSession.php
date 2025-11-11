@@ -895,7 +895,7 @@ class NetworkSession{
 			}
 			if($this->info instanceof XboxLivePlayerInfo){
 				$this->logger->warning("Discarding unexpected XUID for non-authenticated player");
-				$this->info = $this->info->withoutXboxData();
+				//$this->info = $this->info->withoutXboxData();
 			}
 		}
 		$this->logger->debug("Xbox Live authenticated: " . ($this->authenticated ? "YES" : "NO"));
