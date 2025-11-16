@@ -156,6 +156,32 @@ abstract class Living extends Entity{
 		return parent::applyDragBeforeGravity();
 	}
 
+	protected function tryChangeMovement() : void{
+		$friction = 1 - $this->drag;
+
+		$mY = $this->motion->y;
+
+		if($this->applyDragBeforeGravity()){
+			$mY *= $friction;
+		}
+
+		if($this->gravityEnabled){
+			$mY -= $this->gravity;
+		}
+
+		if(!$this->applyDragBeforeGravity()){
+			$mY *= $friction;
+		}
+
+		if($this->onGround){
+			$friction *= $this->getWorld()->getBlockAt((int) floor($this->location->x), (int) floor($this->location->y - 1), (int) floor($this->location->z))->getFrictionFactor();
+		}elseif($this->effectManager->has(VanillaEffects::SLOW_FALLING())){
+			$friction = 3.0;
+		}
+
+		$this->motion = new Vector3($this->motion->x * $friction, $mY, $this->motion->z * $friction);
+	}
+
 	abstract public function getName() : string;
 
 	public function canBeRenamed() : bool{
