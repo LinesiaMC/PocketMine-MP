@@ -84,7 +84,7 @@ final class RespawnAnchor extends Opaque{
 
 			switch($ev->getAction()){
 				case PlayerRespawnAnchorUseEvent::ACTION_EXPLODE:
-					$this->explode($player);
+					//$this->explode($player);
 					return true;
 
 				case PlayerRespawnAnchorUseEvent::ACTION_SET_SPAWN:

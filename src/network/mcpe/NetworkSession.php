@@ -40,6 +40,7 @@ use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\StringTag;
 use pocketmine\network\FilterNoisyPacketException;
+use pocketmine\network\InvalidPacketException;
 use pocketmine\network\mcpe\cache\ChunkCache;
 use pocketmine\network\mcpe\compression\CompressBatchPromise;
 use pocketmine\network\mcpe\compression\Compressor;
@@ -451,7 +452,9 @@ class NetworkSession{
 					}
 					try{
 						$this->handleDataPacket($packet, $buffer);
-					}catch(PacketHandlingException $e){
+					} catch (InvalidPacketException $e) {
+
+					} catch(PacketHandlingException $e){
 						$this->logger->debug($packet->getName() . ": " . base64_encode($buffer));
 						throw PacketHandlingException::wrap($e, "Error processing " . $packet->getName());
 					}catch(FilterNoisyPacketException){
