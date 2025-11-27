@@ -742,6 +742,16 @@ abstract class Living extends Entity{
 			/*if($this->doAirSupplyTick($tickDiff)){
 				$hasUpdate = true;
 			}*/
+
+			foreach($this->armorInventory->getContents() as $index => $item){
+				$oldItem = clone $item;
+				if($item->onTickWorn($this)){
+					$hasUpdate = true;
+					if(!$item->equalsExact($oldItem)){
+						$this->armorInventory->setItem($index, $item);
+					}
+				}
+			}
 		}
 
 		if($this->attackTime > 0){
