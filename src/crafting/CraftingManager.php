@@ -81,18 +81,6 @@ class CraftingManager{
 	 */
 	private array $brewingRecipeCache = [];
 
-	/**
-	 * @var AnvilRecipe[]
-	 * @phpstan-var list<AnvilRecipe>
-	 */
-	private array $anvilRecipes = [];
-
-	/**
-	 * @var AnvilRecipe[][]
-	 * @phpstan-var array<int, array<int, AnvilRecipe>>
-	 */
-	private array $anvilRecipeCache = [];
-
 	/** @phpstan-var ObjectSet<\Closure() : void> */
 	private ObjectSet $recipeRegisteredCallbacks;
 
@@ -202,14 +190,6 @@ class CraftingManager{
 		return $this->potionContainerChangeRecipes;
 	}
 
-	/**
-	 * @return AnvilRecipe[][]
-	 * @phpstan-return list<AnvilRecipe>
-	 */
-	public function getAnvilRecipes() : array{
-		return $this->anvilRecipes;
-	}
-
 	public function registerShapedRecipe(ShapedRecipe $recipe) : void{
 		$this->shapedRecipes[self::hashOutputs($recipe->getResults())][] = $recipe;
 		$this->craftingRecipeIndex[] = $recipe;
@@ -238,14 +218,6 @@ class CraftingManager{
 
 	public function registerPotionContainerChangeRecipe(PotionContainerChangeRecipe $recipe) : void{
 		$this->potionContainerChangeRecipes[] = $recipe;
-
-		foreach($this->recipeRegisteredCallbacks as $callback){
-			$callback();
-		}
-	}
-
-	public function registerAnvilRecipe(AnvilRecipe $recipe) : void{
-		$this->anvilRecipes[] = $recipe;
 
 		foreach($this->recipeRegisteredCallbacks as $callback){
 			$callback();
@@ -320,23 +292,6 @@ class CraftingManager{
 		foreach($this->potionTypeRecipes as $recipe){
 			if($recipe->getIngredient()->accepts($ingredient) && $recipe->getResultFor($input) !== null){
 				return $this->brewingRecipeCache[$inputHash][$ingredientHash] = $recipe;
-			}
-		}
-
-		return null;
-	}
-
-	public function matchAnvilRecipe(Item $input, Item $material) : ?AnvilRecipe{
-		$inputHash = $input->getStateId();
-		$materialHash = $material->getStateId();
-		$cached = $this->anvilRecipeCache[$inputHash][$materialHash] ?? null;
-		if($cached !== null){
-			return $cached;
-		}
-
-		foreach($this->anvilRecipes as $recipe){
-			if($recipe->getResultFor($input, $material) !== null){
-				return $this->anvilRecipeCache[$inputHash][$materialHash] = $recipe;
 			}
 		}
 

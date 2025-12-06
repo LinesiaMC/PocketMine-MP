@@ -334,8 +334,6 @@ final class CraftingManagerFromDataHelper{
 			));
 		}
 
-		$result = AnvilCraftingManagerDataFiller::fillData($result);
-
 		//TODO: smithing
 
 		return $result;
