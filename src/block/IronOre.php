@@ -30,7 +30,7 @@ use pocketmine\item\VanillaItems;
 final class IronOre extends Opaque{
 
 	public function getDropsForCompatibleTool(Item $item) : array{
-		return [VanillaItems::RAW_IRON()->setCount(FortuneDropHelper::weighted($item, min: 1, maxBase: 1))];
+		return [VanillaItems::IRON_INGOT()->setCount(FortuneDropHelper::weighted($item, min: 1, maxBase: 1))];
 	}
 
 	public function isAffectedBySilkTouch() : bool{ return true; }

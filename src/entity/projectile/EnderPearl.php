@@ -23,9 +23,19 @@ declare(strict_types=1);
 
 namespace pocketmine\entity\projectile;
 
+use pocketmine\block\Block;
+use pocketmine\block\FenceGate;
+use pocketmine\block\PressurePlate;
+use pocketmine\block\Tripwire;
+use pocketmine\block\VanillaBlocks;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
+use pocketmine\math\AxisAlignedBB;
+use pocketmine\math\Facing;
+use pocketmine\math\RayTraceResult;
+use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
+use pocketmine\player\Player;
 use pocketmine\world\particle\EndermanTeleportParticle;
 use pocketmine\world\sound\EndermanTeleportSound;
 
@@ -45,5 +55,24 @@ class EnderPearl extends Throwable{
 
 			$owner->attack(new EntityDamageEvent($owner, EntityDamageEvent::CAUSE_FALL, 5));
 		}
+	}
+
+	/**
+	 * @param Block $block
+	 * @param Vector3 $start
+	 * @param Vector3 $end
+	 * @return ?RayTraceResult
+	 */
+	protected function calculateInterceptWithBlock(Block $block, Vector3 $start, Vector3 $end): ?RayTraceResult {
+		$player = $this->getOwningEntity();
+		if ($player instanceof Player && ($block->hasSameTypeId(VanillaBlocks::INVISIBLE_BEDROCK()) || $block->hasSameTypeId(VanillaBlocks::CONCRETE()))) {
+			$this->flagForDespawn();
+			return null;
+		}
+
+		$blockPosition = $block->getPosition();
+		return $block instanceof PressurePlate || $block instanceof Tripwire || $block instanceof FenceGate
+			? new RayTraceResult(new AxisAlignedBB($blockPosition->getX(), $blockPosition->getY(), $blockPosition->getZ(), $blockPosition->getX(), $blockPosition->getY(), $blockPosition->getZ()), Facing::UP, $blockPosition)
+			: $block->calculateIntercept($start, $end);
 	}
 }
