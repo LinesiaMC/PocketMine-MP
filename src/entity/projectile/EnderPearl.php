@@ -65,7 +65,7 @@ class EnderPearl extends Throwable{
 	 */
 	protected function calculateInterceptWithBlock(Block $block, Vector3 $start, Vector3 $end): ?RayTraceResult {
 		$player = $this->getOwningEntity();
-		if ($player instanceof Player && ($block->hasSameTypeId(VanillaBlocks::INVISIBLE_BEDROCK()) || $block->hasSameTypeId(VanillaBlocks::CONCRETE()))) {
+		if ($player instanceof Player && $block->hasSameTypeId(VanillaBlocks::INVISIBLE_BEDROCK()) && $block->hasSameTypeId(VanillaBlocks::SPONGE())) {
 			$this->flagForDespawn();
 			return null;
 		}
