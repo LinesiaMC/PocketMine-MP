@@ -110,6 +110,61 @@ class Bed extends Transparent implements Colored, HorizontalFacing{
 		return $this->head ? Facing::opposite($this->facing) : $this->facing;
 	}
 
+	public function getOtherHalf() : ?Bed{
+		$other = $this->getSide($this->getOtherHalfSide());
+		if($other instanceof Bed && $other->head !== $this->head && $other->facing === $this->facing){
+			return $other;
+		}
+
+		return null;
+	}
+
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
+		if($player !== null){
+			$other = $this->getOtherHalf();
+			$playerPos = $player->getPosition();
+			if($other === null){
+				$player->sendMessage(KnownTranslationFactory::pocketmine_block_bed_incomplete()->prefix(TextFormat::GRAY));
+
+				return true;
+			}elseif($playerPos->distanceSquared($this->position) > 4 && $playerPos->distanceSquared($other->position) > 4){
+				$player->sendMessage(KnownTranslationFactory::tile_bed_tooFar()->prefix(TextFormat::GRAY));
+				return true;
+			}
+
+			$time = $this->position->getWorld()->getTimeOfDay();
+
+			$isNight = ($time >= World::TIME_NIGHT && $time < World::TIME_SUNRISE);
+
+			if(!$isNight){
+				$player->sendMessage(KnownTranslationFactory::tile_bed_noSleep()->prefix(TextFormat::GRAY));
+
+				return true;
+			}
+
+			$b = ($this->isHeadPart() ? $this : $other);
+
+			if($b->occupied){
+				$player->sendMessage(KnownTranslationFactory::tile_bed_occupied()->prefix(TextFormat::GRAY));
+
+				return true;
+			}
+
+			$player->sleepOn($b->position);
+		}
+
+		return true;
+
+	}
+
+	public function onNearbyBlockChange() : void{
+		if(!$this->head && ($other = $this->getOtherHalf()) !== null && $other->occupied !== $this->occupied){
+			$this->occupied = $other->occupied;
+			$this->position->getWorld()->setBlock($this->position, $this);
+		}
+	}
+
+
 	public function onEntityLand(Entity $entity) : ?float{
 		if($entity instanceof Living && $entity->isSneaking()){
 			return null;
