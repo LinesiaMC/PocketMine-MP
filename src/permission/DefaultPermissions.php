@@ -77,9 +77,6 @@ abstract class DefaultPermissions{
 
 		foreach([
 			Names::BROADCAST_ADMIN,
-			Names::COMMAND_BAN_IP,
-			Names::COMMAND_BAN_LIST,
-			Names::COMMAND_BAN_PLAYER,
 			Names::COMMAND_CLEAR_OTHER,
 			Names::COMMAND_DEFAULTGAMEMODE,
 			Names::COMMAND_DIFFICULTY,
@@ -120,8 +117,6 @@ abstract class DefaultPermissions{
 			Names::COMMAND_TITLE_OTHER,
 			Names::COMMAND_TITLE_SELF,
 			Names::COMMAND_TRANSFERSERVER,
-			Names::COMMAND_UNBAN_IP,
-			Names::COMMAND_UNBAN_PLAYER,
 			Names::COMMAND_WHITELIST_ADD,
 			Names::COMMAND_WHITELIST_DISABLE,
 			Names::COMMAND_WHITELIST_ENABLE,
