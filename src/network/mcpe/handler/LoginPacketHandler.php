@@ -180,12 +180,7 @@ class LoginPacketHandler extends PacketHandler{
 		$deviceOs = $clientData->DeviceOS;
 		$deviceId = $clientData->DeviceId;
 
-		if(TitleId::equal(TitleId::ANDROID, $deviceOs)) {
-			if(!HexChecker::isHexadecimal($deviceId)) {
-				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId (ANDROID)");
-				throw new InvalidPacketException("Invalid DeviceId (ANDROID)");
-			}
-		} else if(TitleId::equal(TitleId::IOS, $deviceOs)) {
+		if(TitleId::equal(TitleId::IOS, $deviceOs)) {
 			if(!HashValidator::isValidHash($deviceId)) {
 				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId (IOS)");
 				throw new InvalidPacketException("Invalid DeviceId (IOS)");
@@ -200,42 +195,7 @@ class LoginPacketHandler extends PacketHandler{
 				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId is not b64 (XBOX)");
 				throw new InvalidPacketException("Invalid DeviceId is not b64 (XBOX)");
 			}
-		} else {
-			if(!UUIDValidator::isValidUUID($deviceId)) {
-				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId ($deviceId)");
-				//throw new InvalidPacketException("Invalid DeviceId ($deviceId)");
-			}
-
-			$deviceIdVersion = UUIDValidator::getUUIDVersion($deviceId);
-			if(TitleId::equal(TitleId::NINTENDO, $deviceOs)) {
-				if($deviceIdVersion != 5) {
-					$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId version (SWITCH)");
-					//throw new InvalidPacketException("Invalid DeviceId version (SWITCH)");
-				}
-			} else if($deviceIdVersion != 3) {
-				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId version (" . $deviceIdVersion . ")");
-				//throw new InvalidPacketException("Invalid DeviceId version (" . $deviceIdVersion . ")");
-			}
 		}
-
-		$selfSignedId = $clientData->SelfSignedId;
-		if(!UUIDValidator::isValidUUID($selfSignedId)) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid SelfSignedId");
-			//throw new InvalidPacketException("Invalid SelfSignedId");
-		}
-		if(UUIDValidator::getUUIDVersion($selfSignedId) != 3) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid SelfSignedId version (" . $selfSignedId . ")");
-			//throw new InvalidPacketException("Invalid SelfSignedId version (" . $selfSignedId . ")");
-		}
-		if($deviceId === $selfSignedId) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username SelfSignedId equal DeviceId");
-			//throw new InvalidPacketException("SelfSignedId equal DeviceId");
-		}
-
-		/*if(empty(trim($clientData->PlayFabId))) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid PlayFabId");
-			throw new InvalidPacketException("Invalid PlayFabId");
-		}*/
 
 		if(!str_contains($clientData->SkinColor, "#")) {
 			$this->server->getLogger()->alert("LOGIN LOG : $username SkinColor does not contains #");
