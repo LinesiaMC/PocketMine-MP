@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\entity\effect;
 
-use core\commands\executors\Stats;
 use pocketmine\color\Color;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\utils\RegistrySource;

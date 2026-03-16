@@ -32,7 +32,7 @@ class Melon extends Opaque{
 
 	public function getDropsForCompatibleTool(Item $item) : array{
 		return [
-			VanillaItems::MELON()->setCount(mt_rand(3, 7))
+			VanillaItems::MELON()->setCount(FortuneDropHelper::binomialItem($item, $this,3, 5))
 		];
 	}
 

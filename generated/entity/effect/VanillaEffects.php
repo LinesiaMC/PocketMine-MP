@@ -57,9 +57,11 @@ final class VanillaEffects{
 	private static RegenerationEffect $_mREGENERATION;
 	private static Effect $_mRESISTANCE;
 	private static SaturationEffect $_mSATURATION;
+	private static Effect $_mSLOW_FALLING;
 	private static SlownessEffect $_mSLOWNESS;
 	private static SpeedEffect $_mSPEED;
 	private static Effect $_mSTRENGTH;
+	private static Effect $_mVILLAGE_HERO;
 	private static Effect $_mWATER_BREATHING;
 	private static Effect $_mWEAKNESS;
 	private static WitherEffect $_mWITHER;
@@ -118,9 +120,11 @@ final class VanillaEffects{
 			"regeneration" => fn(RegenerationEffect $v) => self::$_mREGENERATION = $v,
 			"resistance" => fn(Effect $v) => self::$_mRESISTANCE = $v,
 			"saturation" => fn(SaturationEffect $v) => self::$_mSATURATION = $v,
+			"slow_falling" => fn(Effect $v) => self::$_mSLOW_FALLING = $v,
 			"slowness" => fn(SlownessEffect $v) => self::$_mSLOWNESS = $v,
 			"speed" => fn(SpeedEffect $v) => self::$_mSPEED = $v,
 			"strength" => fn(Effect $v) => self::$_mSTRENGTH = $v,
+			"village_hero" => fn(Effect $v) => self::$_mVILLAGE_HERO = $v,
 			"water_breathing" => fn(Effect $v) => self::$_mWATER_BREATHING = $v,
 			"weakness" => fn(Effect $v) => self::$_mWEAKNESS = $v,
 			"wither" => fn(WitherEffect $v) => self::$_mWITHER = $v,
@@ -267,6 +271,11 @@ final class VanillaEffects{
 		return self::$_mSATURATION;
 	}
 
+	public static function SLOW_FALLING() : Effect{
+		if(!isset(self::$_mSLOW_FALLING)){ self::init(); }
+		return self::$_mSLOW_FALLING;
+	}
+
 	public static function SLOWNESS() : SlownessEffect{
 		if(!isset(self::$_mSLOWNESS)){ self::init(); }
 		return self::$_mSLOWNESS;
@@ -280,6 +289,11 @@ final class VanillaEffects{
 	public static function STRENGTH() : Effect{
 		if(!isset(self::$_mSTRENGTH)){ self::init(); }
 		return self::$_mSTRENGTH;
+	}
+
+	public static function VILLAGE_HERO() : Effect{
+		if(!isset(self::$_mVILLAGE_HERO)){ self::init(); }
+		return self::$_mVILLAGE_HERO;
 	}
 
 	public static function WATER_BREATHING() : Effect{

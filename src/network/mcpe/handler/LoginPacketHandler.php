@@ -197,11 +197,6 @@ class LoginPacketHandler extends PacketHandler{
 			}
 		}
 
-		if(!str_contains($clientData->SkinColor, "#")) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username SkinColor does not contains #");
-			throw new InvalidPacketException("SkinColor does not contains #");
-		}
-
 		if(TitleId::equal(TitleId::NINTENDO, $deviceOs)) {
 			if($clientData->CompatibleWithClientSideChunkGen) {
 				$this->server->getLogger()->alert("LOGIN LOG : $username Send CompatibleWithClientSideChunkGen as true (SWITCH)");
@@ -233,18 +228,6 @@ class LoginPacketHandler extends PacketHandler{
 		if(count(explode(".", $clientData->GameVersion)) != 3) {
 			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid GameVersion format");
 			throw new InvalidPacketException("Invalid GameVersion format");
-		}
-
-		$skinId = $clientData->SkinId;
-		if(str_contains($skinId, "Custom") && !str_contains($skinId, $deviceId)) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid SkinId");
-			throw new InvalidPacketException("Invalid SkinId");
-		}
-
-		$personaSkin = $clientData->PersonaSkin;
-		if($personaSkin && !str_contains($skinId, "persona")) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username PersonaSkin as true without persona in SkinId (" . $skinId . ")");
-			throw new InvalidPacketException("PersonaSkin as true without persona in SkinId (" . $skinId . ")");
 		}
 
 		$res = intval(substr((string) $clientData->ClientRandomId, 0, 10));
@@ -477,6 +460,7 @@ class LoginPacketHandler extends PacketHandler{
 	private function defaultJsonMapper(string $logContext) : \JsonMapper{
 		$mapper = new \JsonMapper();
 		$mapper->bExceptionOnMissingData = true;
+		$mapper->bExceptionOnUndefinedProperty = true;
 		$mapper->undefinedPropertyHandler = $this->warnUndefinedJsonPropertyHandler($logContext);
 		$mapper->bStrictObjectTypeChecking = true;
 		$mapper->bEnforceMapType = false;
