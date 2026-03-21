@@ -460,7 +460,7 @@ class LoginPacketHandler extends PacketHandler{
 	private function defaultJsonMapper(string $logContext) : \JsonMapper{
 		$mapper = new \JsonMapper();
 		$mapper->bExceptionOnMissingData = true;
-		$mapper->bExceptionOnUndefinedProperty = true;
+		$mapper->bExceptionOnUndefinedProperty = false;
 		$mapper->undefinedPropertyHandler = $this->warnUndefinedJsonPropertyHandler($logContext);
 		$mapper->bStrictObjectTypeChecking = true;
 		$mapper->bEnforceMapType = false;
