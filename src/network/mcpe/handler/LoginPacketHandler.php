@@ -419,6 +419,18 @@ class LoginPacketHandler extends PacketHandler{
 			throw PacketHandlingException::wrap($e);
 		}
 
+		$validProperties = array_map(
+			fn(\ReflectionProperty $p) => $p->getName(),
+			(new \ReflectionClass(ClientData::class))->getProperties()
+		);
+		$validPropertiesMap = array_flip($validProperties);
+		foreach($clientDataClaims as $key => $_){
+			if(!isset($validPropertiesMap[$key])){
+				$this->session->getLogger()->warning("ClientData JWT body: Unexpected property for ClientData: " . $key);
+				unset($clientDataClaims[$key]);
+			}
+		}
+
 		$mapper = $this->defaultJsonMapper("ClientData JWT body");
 		try{
 			$clientData = $mapper->map($clientDataClaims, new ClientData());
@@ -460,7 +472,7 @@ class LoginPacketHandler extends PacketHandler{
 	private function defaultJsonMapper(string $logContext) : \JsonMapper{
 		$mapper = new \JsonMapper();
 		$mapper->bExceptionOnMissingData = true;
-		$mapper->bExceptionOnUndefinedProperty = false;
+		$mapper->bExceptionOnUndefinedProperty = true;
 		$mapper->undefinedPropertyHandler = $this->warnUndefinedJsonPropertyHandler($logContext);
 		$mapper->bStrictObjectTypeChecking = true;
 		$mapper->bEnforceMapType = false;
