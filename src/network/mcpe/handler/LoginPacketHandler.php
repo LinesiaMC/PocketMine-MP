@@ -175,37 +175,48 @@ class LoginPacketHandler extends PacketHandler{
 		}
 
 		$clientData = $this->parseClientData($packet->clientDataJwt);
+		if($clientData === null){
+			return null;
+		}
 
-		$this->handleFromClientData($clientData);
+		try{
+			$this->handleFromClientData($clientData);
+		}catch(InvalidPacketException $e){
+			$this->session->disconnectWithError(
+				reason: $e->getMessage(),
+				disconnectScreenMessage: "Invalid client data"
+			);
+			return null;
+		}
 
 		$deviceOs = $clientData->DeviceOS;
 		$deviceId = $clientData->DeviceId;
 
 		if(TitleId::equal(TitleId::IOS, $deviceOs)) {
 			if(!HashValidator::isValidHash($deviceId)) {
-				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId (IOS)");
-				throw new InvalidPacketException("Invalid DeviceId (IOS)");
+				$this->session->disconnectWithError(reason: "Invalid DeviceId (IOS)", disconnectScreenMessage: "Invalid client data");
+				return null;
 			}
 
 			if(!HashValidator::isValidMD5($deviceId)) {
-				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid MD5 DeviceId (IOS)");
-				throw new InvalidPacketException("Invalid MD5 DeviceId (IOS)");
+				$this->session->disconnectWithError(reason: "Invalid MD5 DeviceId (IOS)", disconnectScreenMessage: "Invalid client data");
+				return null;
 			}
 		} else if(TitleId::equal(TitleId::XBOX, $deviceOs)) {
 			if(!Base64Validator::isBase64($deviceId)) {
-				$this->server->getLogger()->alert("LOGIN LOG : $username Invalid DeviceId is not b64 (XBOX)");
-				throw new InvalidPacketException("Invalid DeviceId is not b64 (XBOX)");
+				$this->session->disconnectWithError(reason: "Invalid DeviceId (XBOX)", disconnectScreenMessage: "Invalid client data");
+				return null;
 			}
 		}
 
 		if(TitleId::equal(TitleId::NINTENDO, $deviceOs)) {
 			if($clientData->CompatibleWithClientSideChunkGen) {
-				$this->server->getLogger()->alert("LOGIN LOG : $username Send CompatibleWithClientSideChunkGen as true (SWITCH)");
-				throw new InvalidPacketException("Send CompatibleWithClientSideChunkGen as true (SWITCH)");
+				$this->session->disconnectWithError(reason: "Invalid CompatibleWithClientSideChunkGen (SWITCH)", disconnectScreenMessage: "Invalid client data");
+				return null;
 			}
 		} else if(!$clientData->CompatibleWithClientSideChunkGen) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username Send CompatibleWithClientSideChunkGen as false (OTHER)");
-			throw new InvalidPacketException("Send CompatibleWithClientSideChunkGen as false (OTHER)");
+			$this->session->disconnectWithError(reason: "Invalid CompatibleWithClientSideChunkGen", disconnectScreenMessage: "Invalid client data");
+			return null;
 		}
 
 		$languagesCode = [
@@ -222,24 +233,24 @@ class LoginPacketHandler extends PacketHandler{
 		];
 		$languageCode = $clientData->LanguageCode;
 		if(!in_array($languageCode, $languagesCode)) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid LanguageCode ({$languageCode})");
-			throw new InvalidPacketException("Invalid LanguageCode ({$languageCode})");
+			$this->session->disconnectWithError(reason: "Invalid LanguageCode ({$languageCode})", disconnectScreenMessage: "Invalid client data");
+			return null;
 		}
 
 		if(count(explode(".", $clientData->GameVersion)) != 3) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid GameVersion format");
-			throw new InvalidPacketException("Invalid GameVersion format");
+			$this->session->disconnectWithError(reason: "Invalid GameVersion format", disconnectScreenMessage: "Invalid client data");
+			return null;
 		}
 
 		$res = intval(substr((string) $clientData->ClientRandomId, 0, 10));
 		if(($c = abs($res - time())) <= 60) {
-			$this->server->getLogger()->alert("LOGIN LOG : $username Invalid ClientRandomId (diff: {$c})");
-			throw new InvalidPacketException("Invalid ClientRandomId (diff: {$c})");
+			$this->session->disconnectWithError(reason: "Invalid ClientRandomId (diff: {$c})", disconnectScreenMessage: "Invalid client data");
+			return null;
 		}
 
 		if($clientData->DeviceModel === "PrismarineJS"){
-			$this->server->getLogger()->alert("LOGIN LOG : $username DeviceModel Prismarine JS");
-			throw new InvalidPacketException("DeviceModel Prismarine JS");
+			$this->session->disconnectWithError(reason: "DeviceModel Prismarine JS", disconnectScreenMessage: "Invalid client data");
+			return null;
 		}
 
 		try{
@@ -310,6 +321,12 @@ class LoginPacketHandler extends PacketHandler{
 		}
 		if(!in_array(($c = $clientData->SkinImageHeight), [32, 64, 128, 256])) {
 			throw new InvalidPacketException("Invalid SkinHeight ({$c})");
+		}
+
+		$expectedSkinDataSize = $clientData->SkinImageWidth * $clientData->SkinImageHeight * 4;
+		$actualSkinDataSize = strlen(base64_decode($clientData->SkinData, true) ?: "");
+		if($actualSkinDataSize !== $expectedSkinDataSize){
+			throw new InvalidPacketException("Invalid SkinData size: expected {$expectedSkinDataSize} bytes, got {$actualSkinDataSize} bytes");
 		}
 
 		$geometryData = self::safeB64Decode($clientData->SkinGeometryData);
@@ -413,7 +430,7 @@ class LoginPacketHandler extends PacketHandler{
 	/**
 	 * @throws PacketHandlingException
 	 */
-	protected function parseClientData(string $clientDataJwt) : ClientData{
+	protected function parseClientData(string $clientDataJwt) : ?ClientData{
 		try{
 			[, $clientDataClaims, ] = JwtUtils::parse($clientDataJwt);
 		}catch(JwtException $e){
@@ -427,8 +444,11 @@ class LoginPacketHandler extends PacketHandler{
 		$validPropertiesMap = array_flip($validProperties);
 		foreach($clientDataClaims as $key => $_){
 			if(!isset($validPropertiesMap[$key])){
-				$this->session->getLogger()->warning("ClientData JWT body: Unexpected property for ClientData: " . $key);
-				unset($clientDataClaims[$key]);
+				$this->session->disconnectWithError(
+					reason: "ClientData JWT body: Unexpected property: " . Utils::printable(substr($key, 0, 80)),
+					disconnectScreenMessage: "Invalid client data"
+				);
+				return null;
 			}
 		}
 

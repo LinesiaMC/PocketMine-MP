@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace pocketmine\entity\projectile;
 
 use pocketmine\block\Block;
-use pocketmine\block\FenceGate;
 use pocketmine\block\PressurePlate;
 use pocketmine\block\Tripwire;
 use pocketmine\block\VanillaBlocks;
@@ -71,7 +70,7 @@ class EnderPearl extends Throwable{
 		}
 
 		$blockPosition = $block->getPosition();
-		return $block instanceof PressurePlate || $block instanceof Tripwire || $block instanceof FenceGate
+		return $block instanceof PressurePlate || $block instanceof Tripwire
 			? new RayTraceResult(new AxisAlignedBB($blockPosition->getX(), $blockPosition->getY(), $blockPosition->getZ(), $blockPosition->getX(), $blockPosition->getY(), $blockPosition->getZ()), Facing::UP, $blockPosition)
 			: $block->calculateIntercept($start, $end);
 	}
