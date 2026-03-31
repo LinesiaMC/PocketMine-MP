@@ -65,7 +65,8 @@ class EnderPearl extends Throwable{
 		}
 	}
 
-	private function wouldTeleportThroughFenceGate(Vector3 $ownerPos, Vector3 $target) : bool{
+	/* Big box 3d
+	 * private function wouldTeleportThroughFenceGate(Vector3 $ownerPos, Vector3 $target) : bool{
 		$halfWidth = 0.3;
 		$height = 1.8;
 
@@ -114,6 +115,116 @@ class EnderPearl extends Throwable{
 				}
 			}
 		}
+		return false;
+	}*/
+
+	private function wouldTeleportThroughFenceGate(Vector3 $ownerPos, Vector3 $target) : bool{
+		$playerHalfWidth = 0.3;
+		$playerHeight = 1.8;
+
+		$world = $this->getWorld();
+
+		$dx = $target->x - $ownerPos->x;
+		$dy = $target->y - $ownerPos->y;
+		$dz = $target->z - $ownerPos->z;
+
+		$distanceSquared = $dx * $dx + $dy * $dy + $dz * $dz;
+		if($distanceSquared <= 0.000001){
+			return false;
+		}
+
+		// On garde une petite marge autour du segment pour récupérer
+		// les gates potentiellement touchés sans scanner un volume absurde.
+		$searchMargin = 1.0;
+
+		$minX = (int) floor(min($ownerPos->x, $target->x) - $searchMargin);
+		$minY = (int) floor(min($ownerPos->y, $target->y));
+		$minZ = (int) floor(min($ownerPos->z, $target->z) - $searchMargin);
+		$maxX = (int) floor(max($ownerPos->x, $target->x) + $searchMargin);
+		$maxY = (int) floor(max($ownerPos->y, $target->y) + $playerHeight);
+		$maxZ = (int) floor(max($ownerPos->z, $target->z) + $searchMargin);
+
+		for($x = $minX; $x <= $maxX; $x++){
+			for($y = $minY; $y <= $maxY; $y++){
+				for($z = $minZ; $z <= $maxZ; $z++){
+					$block = $world->getBlockAt($x, $y, $z);
+					if(!($block instanceof FenceGate) || $block->isOpen()){
+						continue;
+					}
+
+					$axis = Facing::axis($block->getFacing());
+
+					// Fence gate fermé = fine collision au centre du bloc
+					// + hauteur ~1.5
+					$gateMinY = $y;
+					$gateMaxY = $y + 1.5;
+
+					if($axis === Axis::X){
+						// Mur "vertical" centré sur X, occupant presque toute la largeur en Z
+						$plane = $x + 0.5;
+
+						// Si le segment ne traverse pas le plan du gate, inutile
+						if(($ownerPos->x - $plane) * ($target->x - $plane) > 0){
+							continue;
+						}
+
+						// Segment quasi parallèle au plan => pas de traversée exploitable
+						if(abs($dx) < 1.0e-6){
+							continue;
+						}
+
+						$t = ($plane - $ownerPos->x) / $dx;
+						if($t < 0.0 || $t > 1.0){
+							continue;
+						}
+
+						$hitY = $ownerPos->y + $dy * $t;
+						$hitZ = $ownerPos->z + $dz * $t;
+
+						// Vérifie chevauchement vertical avec la hitbox joueur
+						if($hitY >= $gateMaxY || ($hitY + $playerHeight) <= $gateMinY){
+							continue;
+						}
+
+						// Le gate prend le bloc en Z, avec marge de demi-largeur du joueur
+						if($hitZ < ($z - $playerHalfWidth) || $hitZ > ($z + 1 + $playerHalfWidth)){
+							continue;
+						}
+
+						return true;
+					}elseif($axis === Axis::Z){
+						$plane = $z + 0.5;
+
+						if(($ownerPos->z - $plane) * ($target->z - $plane) > 0){
+							continue;
+						}
+
+						if(abs($dz) < 1.0e-6){
+							continue;
+						}
+
+						$t = ($plane - $ownerPos->z) / $dz;
+						if($t < 0.0 || $t > 1.0){
+							continue;
+						}
+
+						$hitY = $ownerPos->y + $dy * $t;
+						$hitX = $ownerPos->x + $dx * $t;
+
+						if($hitY >= $gateMaxY || ($hitY + $playerHeight) <= $gateMinY){
+							continue;
+						}
+
+						if($hitX < ($x - $playerHalfWidth) || $hitX > ($x + 1 + $playerHalfWidth)){
+							continue;
+						}
+
+						return true;
+					}
+				}
+			}
+		}
+
 		return false;
 	}
 
