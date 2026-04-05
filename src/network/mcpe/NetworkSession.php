@@ -463,10 +463,10 @@ class NetworkSession{
 					}
 					try{
 						$this->handleDataPacket($packet, $buffer);
-					} catch (InvalidPacketException $e) {
-
-					} catch(PacketHandlingException $e){
-						$this->logger->debug($packet->getName() . ": " . base64_encode($buffer));
+					}catch(InvalidPacketException $e){
+						//silently ignore invalid packets
+					}catch(PacketHandlingException $e){
+						$this->unhandledPacketDebug($packet, $buffer, "Packet processing error");
 						throw PacketHandlingException::wrap($e, "Error processing " . $packet->getName());
 					}catch(FilterNoisyPacketException){
 						$this->noisyPacketBuffer = $buffer;
@@ -487,7 +487,11 @@ class NetworkSession{
 	}
 
 	private function unhandledPacketDebug(Packet $packet, string $buffer, string $label) : void{
-		$this->logger->debug($label . ": " . $packet->getName() . ": " . base64_encode($buffer));
+		$debugSegment = substr($buffer, 0, 1024);
+		$debugSegmentLength = strlen($debugSegment);
+		$fullLength = strlen($buffer);
+		$truncatedLabel = $debugSegmentLength === $fullLength ? "" : " ... (" . ($fullLength - $debugSegmentLength) . " bytes not shown)";
+		$this->logger->debug($label . ": " . $packet->getName() . " ($fullLength bytes): " . base64_encode($debugSegment) . $truncatedLabel);
 	}
 
 	/**
