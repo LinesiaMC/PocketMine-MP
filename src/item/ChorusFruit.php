@@ -90,14 +90,14 @@ class ChorusFruit extends Food{
 
 		$origin = $consumer->getPosition();
 
-		// horizontal : 0–17
-		$minX = $origin->getFloorX() - 17;
+		// horizontal : 0–20
+		$minX = $origin->getFloorX() - 20;
 		$minY = min($origin->getFloorY(), $consumer->getWorld()->getMaxY()) - 22; // ← était -8
-		$minZ = $origin->getFloorZ() - 17;
+		$minZ = $origin->getFloorZ() - 20;
 
-		$maxX = $minX + 34;
+		$maxX = $minX + 40;
 		$maxY = $minY + 44; // ← était +16 (soit ±22)
-		$maxZ = $minZ + 34;
+		$maxZ = $minZ + 40;
 
 		$worldMinY = $world->getMinY();
 
@@ -106,10 +106,10 @@ class ChorusFruit extends Food{
 			$y = mt_rand($minY, $maxY);
 			$z = mt_rand($minZ, $maxZ);
 
-			// borne la distance horizontale à [0 ; 17]
+			// borne la distance horizontale à [0 ; 20]
 			$dx = ($x + 0.5) - $origin->getX();
 			$dz = ($z + 0.5) - $origin->getZ();
-			if(($dx*$dx + $dz*$dz) > 17*17){
+			if(($dx*$dx + $dz*$dz) > 20*20){
 				continue;
 			}
 

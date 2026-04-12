@@ -24,14 +24,8 @@ declare(strict_types=1);
 namespace pocketmine\block\utils;
 
 use pocketmine\block\Block;
-use pocketmine\block\Crops;
-use pocketmine\block\Wood;
-use pocketmine\item\Axe;
 use pocketmine\item\enchantment\VanillaEnchantments;
-use pocketmine\item\Hoe;
 use pocketmine\item\Item;
-use pocketmine\item\Pickaxe;
-use pocketmine\world\generator\populator\Ore;
 use function max;
 use function min;
 use function mt_getrandmax;
@@ -101,44 +95,29 @@ final class FortuneDropHelper{
 		return $count;
 	}
 
-	public static function binomialItem(Item $usedItem, Block $block, int $min, int $rolls = 3, float $chance = 4/7): int {
-		$fortuneLevel = 0;
-
-		if (self::matchesFortuneContext($usedItem, $block)) {
-			$fortuneLevel = $usedItem->getEnchantmentLevel(VanillaEnchantments::FORTUNE());
-		}
-
+	/**
+	 * Variante de {@see self::binomial} qui prend explicitement le bloc concerné en paramètre.
+	 *
+	 * Le paramètre $block est conservé pour compatibilité avec les appels existants, mais aucune
+	 * restriction d’outil n’est appliquée : Fortune fonctionne dès que l’outil utilisé porte
+	 * l’enchantement, quel que soit son type. Cela colle au comportement vanilla pour les
+	 * cultures, les pastèques, les citrouilles, etc.
+	 *
+	 * @param int   $min    Quantité minimum
+	 * @param int   $rolls  Nombre de tirages si Fortune = 0 (additionné au niveau de Fortune)
+	 * @param float $chance Probabilité d’incrémenter le compteur à chaque tirage (0-1)
+	 */
+	public static function binomialItem(Item $usedItem, Block $block, int $min, int $rolls = 3, float $chance = 4 / 7) : int{
+		$fortuneLevel = $usedItem->getEnchantmentLevel(VanillaEnchantments::FORTUNE());
 		$totalRolls = $rolls + $fortuneLevel;
 
 		$count = $min;
-		for ($i = 0; $i < $totalRolls; ++$i) {
-			if (mt_rand() / mt_getrandmax() < $chance) {
+		for($i = 0; $i < $totalRolls; ++$i){
+			if(mt_rand() / mt_getrandmax() < $chance){
 				++$count;
 			}
 		}
 		return $count;
-	}
-
-	/**
-	 * Retourne true si l’outil/Bloc correspondent pour appliquer Fortune :
-	 * - Hoe sur cultures (Crops)
-	 * - Pickaxe sur minerais (Ore)
-	 * - Axe sur blocs « bois » (tout bloc dont l’outil conseillé est la hache)
-	 */
-	private static function matchesFortuneContext(Item $usedItem, Block $block): bool {
-		if ($usedItem instanceof Hoe && $block instanceof Crops) {
-			return true;
-		}
-
-		if ($usedItem instanceof Pickaxe && $block instanceof Ore) {
-			return true;
-		}
-
-		if ($usedItem instanceof Axe && $block instanceof Wood) {
-			return true;
-		}
-
-		return false;
 	}
 
 	/**
