@@ -464,7 +464,9 @@ class NetworkSession{
 					try{
 						$this->handleDataPacket($packet, $buffer);
 					}catch(InvalidPacketException $e){
-						//silently ignore invalid packets
+						$this->disconnect($e->getMessage(), TextFormat::RED . "Votre jeu a rencontré une erreur avec le serveur !");
+						Server::getInstance()->getNetwork()->blockAddress($this->getIp(), 10);
+						break;
 					}catch(PacketHandlingException $e){
 						$this->unhandledPacketDebug($packet, $buffer, "Packet processing error");
 						throw PacketHandlingException::wrap($e, "Error processing " . $packet->getName());
