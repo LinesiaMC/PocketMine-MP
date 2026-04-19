@@ -118,6 +118,7 @@ use pocketmine\timings\Timings;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\ObjectSet;
 use pocketmine\utils\TextFormat;
+use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 use pocketmine\world\Position;
 use pocketmine\world\World;
@@ -467,11 +468,13 @@ class NetworkSession{
 						$this->disconnect($e->getMessage(), TextFormat::RED . "Votre jeu a rencontré une erreur avec le serveur !");
 						Server::getInstance()->getNetwork()->blockAddress($this->getIp(), 10);
 						break;
-					}catch(PacketHandlingException $e){
-						$this->unhandledPacketDebug($packet, $buffer, "Packet processing error");
-						throw PacketHandlingException::wrap($e, "Error processing " . $packet->getName());
 					}catch(FilterNoisyPacketException){
 						$this->noisyPacketBuffer = $buffer;
+					}catch(\Throwable $e){
+						$this->logger->error("Packet {$packet->getName()} (PID: {$packet->pid()}): {$e->getMessage()}");
+						$this->logger->error(implode("\n", Utils::printableExceptionInfo($e)));
+						$this->disconnect(TextFormat::colorize("&cInternal Error: " . $e->getMessage()));
+						break;
 					}
 					if(!$this->isConnected()){
 						//handling this packet may have caused a disconnection

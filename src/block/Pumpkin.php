@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
+use pocketmine\block\utils\FortuneDropHelper;
 use pocketmine\item\Item;
 use pocketmine\item\Shears;
 use pocketmine\item\VanillaItems;
@@ -42,5 +43,11 @@ class Pumpkin extends Opaque{
 			return true;
 		}
 		return false;
+	}
+
+	public function getDropsForCompatibleTool(Item $item) : array{
+		return [
+			$this->asItem()->setCount(FortuneDropHelper::binomialItem($item, $this, 1, 0))
+		];
 	}
 }
