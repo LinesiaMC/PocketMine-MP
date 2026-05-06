@@ -27,8 +27,13 @@ use pocketmine\block\Liquid;
 use pocketmine\entity\Living;
 use pocketmine\math\Vector3;
 use pocketmine\world\sound\EndermanTeleportSound;
+use function abs;
+use function cos;
 use function min;
 use function mt_rand;
+use function round;
+use function sin;
+use const M_PI;
 
 class ChorusFruit extends Food{
 
@@ -89,48 +94,69 @@ class ChorusFruit extends Food{
 		$world = $consumer->getWorld();
 
 		$origin = $consumer->getPosition();
-
-		// horizontal : 0–20
-		$minX = $origin->getFloorX() - 20;
-		$minY = min($origin->getFloorY(), $consumer->getWorld()->getMaxY()) - 22; // ← était -8
-		$minZ = $origin->getFloorZ() - 20;
-
-		$maxX = $minX + 40;
-		$maxY = $minY + 44; // ← était +16 (soit ±22)
-		$maxZ = $minZ + 40;
-
 		$worldMinY = $world->getMinY();
+		$worldMaxY = $world->getMaxY();
 
-		for($attempts = 0; $attempts < 16; ++$attempts){
-			$x = mt_rand($minX, $maxX);
-			$y = mt_rand($minY, $maxY);
-			$z = mt_rand($minZ, $maxZ);
+		$maxRadius = 20;
+		$maxVertical = 22;
 
-			// borne la distance horizontale à [0 ; 20]
-			$dx = ($x + 0.5) - $origin->getX();
-			$dz = ($z + 0.5) - $origin->getZ();
-			if(($dx*$dx + $dz*$dz) > 20*20){
-				continue;
+		// Distribution biaisée (u^2) : forte probabilité de tp proche, faible probabilité de tp loin.
+		for($attempts = 0; $attempts < 32; ++$attempts){
+			$u = mt_rand(0, 10000) / 10000;
+			$r = $maxRadius * $u * $u;
+			$angle = (mt_rand(0, 10000) / 10000) * M_PI * 2;
+
+			$uy = mt_rand(0, 10000) / 10000;
+			$dy = (int) round($maxVertical * $uy * $uy * (mt_rand(0, 1) === 0 ? -1 : 1));
+
+			$x = $origin->getFloorX() + (int) round(cos($angle) * $r);
+			$y = min($origin->getFloorY() + $dy, $worldMaxY);
+			$z = $origin->getFloorZ() + (int) round(sin($angle) * $r);
+
+			if($this->tryTeleport($consumer, $origin, $x, $y, $z, $worldMinY)){
+				return;
 			}
-
-			while($y >= $worldMinY && !$world->getBlockAt($x, $y, $z)->isSolid()){
-				$y--;
-			}
-			if($y < $worldMinY){
-				continue;
-			}
-
-			$blockUp = $world->getBlockAt($x, $y + 1, $z);
-			$blockUp2 = $world->getBlockAt($x, $y + 2, $z);
-			if($blockUp->isSolid() || $blockUp instanceof Liquid || $blockUp2->isSolid() || $blockUp2 instanceof Liquid){
-				continue;
-			}
-
-			$world->addSound($origin, new EndermanTeleportSound());
-			$consumer->teleport($target = new Vector3($x + 0.5, $y + 1, $z + 0.5));
-			$world->addSound($target, new EndermanTeleportSound());
-			break;
 		}
+
+		// Fallback déterministe : recherche en couches concentriques pour garantir une téléportation.
+		for($r = 1; $r <= $maxRadius; ++$r){
+			for($dx = -$r; $dx <= $r; ++$dx){
+				for($dz = -$r; $dz <= $r; ++$dz){
+					if(abs($dx) !== $r && abs($dz) !== $r){
+						continue; // ne tester que la couche extérieure
+					}
+					$x = $origin->getFloorX() + $dx;
+					$z = $origin->getFloorZ() + $dz;
+					$y = min($origin->getFloorY(), $worldMaxY);
+
+					if($this->tryTeleport($consumer, $origin, $x, $y, $z, $worldMinY)){
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	private function tryTeleport(Living $consumer, Vector3 $origin, int $x, int $y, int $z, int $worldMinY) : bool{
+		$world = $consumer->getWorld();
+
+		while($y >= $worldMinY && !$world->getBlockAt($x, $y, $z)->isSolid()){
+			$y--;
+		}
+		if($y < $worldMinY){
+			return false;
+		}
+
+		$blockUp = $world->getBlockAt($x, $y + 1, $z);
+		$blockUp2 = $world->getBlockAt($x, $y + 2, $z);
+		if($blockUp->isSolid() || $blockUp instanceof Liquid || $blockUp2->isSolid() || $blockUp2 instanceof Liquid){
+			return false;
+		}
+
+		$world->addSound($origin, new EndermanTeleportSound());
+		$consumer->teleport($target = new Vector3($x + 0.5, $y + 1, $z + 0.5));
+		$world->addSound($target, new EndermanTeleportSound());
+		return true;
 	}
 
 	public function getCooldownTicks() : int{
